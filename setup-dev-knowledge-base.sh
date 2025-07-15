@@ -56,14 +56,14 @@ create_structure() {
     echo "📁 Creating project structure..."
     
     # Main directories
-    mkdir -p video-intelligence-platform/{services,infrastructure,docker,scripts,docs}
-    mkdir -p video-intelligence-platform/services/{backend,mcp}
-    mkdir -p video-intelligence-platform/services/backend/{api,workers,core,services,models,schemas,tests}
+    mkdir -p {services,infrastructure,docker,scripts,docs}
+    mkdir -p services/{backend,mcp}
+    mkdir -p services/backend/{api,workers,core,services,models,schemas,tests}
     
     # Knowledge base directories
-    mkdir -p video-intelligence-platform/dev-knowledge-base/{ingestion,knowledge,mongodb,rag,docs,tools}
-    mkdir -p video-intelligence-platform/dev-knowledge-base/knowledge/{embeddings,graphs,summaries}
-    mkdir -p video-intelligence-platform/dev-knowledge-base/docs/{imported,pdfs,new}
+    mkdir -p dev-knowledge-base/{ingestion,knowledge,mongodb,rag,docs,tools}
+    mkdir -p dev-knowledge-base/knowledge/{embeddings,graphs,summaries}
+    mkdir -p dev-knowledge-base/docs/{imported,pdfs,new}
     
     echo "✅ Project structure created"
 }
@@ -71,8 +71,6 @@ create_structure() {
 # Setup Python environment
 setup_python() {
     echo "🐍 Setting up Python environment..."
-    
-    cd video-intelligence-platform
     
     # Create virtual environment
     python3 -m venv venv
@@ -156,14 +154,6 @@ setup_mongodb() {
 # Copy and setup knowledge extraction scripts
 setup_scripts() {
     echo "📝 Setting up knowledge extraction scripts..."
-    
-    # Copy the CLAUDE_INSTRUCTIONS.md
-    cp "$OLD_REPO_PATH/CLAUDE_INSTRUCTIONS.md" ./CLAUDE_INSTRUCTIONS.md 2>/dev/null || \
-    echo "# Video Intelligence Platform - Claude CLI Instructions" > ./CLAUDE_INSTRUCTIONS.md
-    
-    # Update the OLD_REPO_PATH in instructions
-    sed -i.bak "s|\[OLD_REPO_PATH\]|$OLD_REPO_PATH|g" ./CLAUDE_INSTRUCTIONS.md
-    rm -f ./CLAUDE_INSTRUCTIONS.md.bak
     
     # Create the main knowledge population script
     cat > ./scripts/populate_knowledge_base.py << 'EOF'
@@ -263,7 +253,7 @@ source venv/bin/activate
 2. Populate the knowledge base
 3. Start implementing core services
 
-See \`CLAUDE_INSTRUCTIONS.md\` for detailed implementation guidance.
+See \`CLAUDE.md\` for detailed implementation guidance.
 EOF
 
     echo "✅ Documentation created"
@@ -357,22 +347,20 @@ main() {
     # Copy PDFs if provided
     if [ -d "$PDF_PATH" ]; then
         echo "📄 Copying PDF documents..."
-        cp -r "$PDF_PATH"/* ./video-intelligence-platform/dev-knowledge-base/docs/pdfs/ 2>/dev/null || true
+        cp -r "$PDF_PATH"/* ./dev-knowledge-base/docs/pdfs/ 2>/dev/null || true
     fi
     
     # Import critical docs from old repo
     echo "📚 Importing critical documentation..."
-    mkdir -p ./video-intelligence-platform/dev-knowledge-base/docs/imported
+    mkdir -p ./dev-knowledge-base/docs/imported
     
     # Copy specific directories
     for dir in "current" "reference" "guides" "history" "planning"; do
         if [ -d "$OLD_REPO_PATH/apps/web/docs/$dir" ]; then
             cp -r "$OLD_REPO_PATH/apps/web/docs/$dir" \
-                ./video-intelligence-platform/dev-knowledge-base/docs/imported/
+                ./dev-knowledge-base/docs/imported/
         fi
     done
-    
-    cd video-intelligence-platform
     
     echo ""
     echo "✨ Setup complete!"
@@ -383,7 +371,7 @@ main() {
     echo "   1. cd video-intelligence-platform"
     echo "   2. source venv/bin/activate"
     echo "   3. Update .env with your API keys"
-    echo "   4. Run: claude 'Following CLAUDE_INSTRUCTIONS.md, implement the knowledge extraction scripts'"
+    echo "   4. Run: claude 'Following CLAUDE.md, implement the knowledge extraction scripts'"
     echo "   5. Run: python scripts/populate_knowledge_base.py '$OLD_REPO_PATH' ./dev-knowledge-base/docs/pdfs"
     echo "   6. Start developing with: ./dev-cli ask 'your question'"
     echo ""
