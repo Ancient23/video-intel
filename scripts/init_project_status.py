@@ -4,7 +4,7 @@
 import asyncio
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Add backend to path
 sys.path.append(str(Path(__file__).parent.parent / "services"))
@@ -26,7 +26,7 @@ async def initialize_project_status():
         if existing:
             print("Found existing project status, updating...")
             # Update existing status
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(timezone.utc)
             existing.add_note("Dev environment initialized with MongoDB models", "setup")
             
             # Update component statuses based on what we've done
@@ -64,7 +64,7 @@ async def initialize_project_status():
                     "Set up AWS Rekognition integration",
                 ],
                 notes=[{
-                    "timestamp": datetime.utcnow(),
+                    "timestamp": datetime.now(timezone.utc),
                     "category": "setup",
                     "note": "Project initialized with MongoDB models and development knowledge base"
                 }]
