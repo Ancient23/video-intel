@@ -25,4 +25,4 @@ source venv/bin/activate
 2. Populate the knowledge base
 3. Start implementing core services
 
-See `CLAUDE_INSTRUCTIONS.md` for detailed implementation guidance.
+See `CLAUDE.md` for detailed implementation guidance.
