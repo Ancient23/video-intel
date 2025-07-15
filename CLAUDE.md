@@ -10,6 +10,21 @@ This is a complete redesign of VideoCommentator, transforming it into a comprehe
 1. **Ingestion Phase**: Heavy preprocessing to extract comprehensive knowledge
 2. **Runtime Phase**: Lightweight retrieval for real-time conversational AI
 
+## Prompt Templates
+
+**IMPORTANT**: Always use the templates in `PROMPTS.md` for common tasks. Reference them by name:
+- **status-check** - Check current project status and next steps
+- **status-update** - Update MongoDB after completing work
+- **knowledge-query** - Query the dev knowledge base for patterns
+- **knowledge-add** - Add new patterns to knowledge base
+- **impl-plan** - Implement a component from PRD
+- **next-task** - Get next implementation priority
+- **feature-provider** - Add new provider integration
+- **bug** - Debug issues with knowledge base help
+- **test** - Add tests following patterns
+
+Example usage: "Apply the status-check template from PROMPTS.md"
+
 ## Reference Repository
 
 **Old VideoCommentator Repository**: `/Users/filip/Documents/Source/VideoCommentator-MonoRepo` 
@@ -200,3 +215,39 @@ cd services/backend && python -m api.generate_docs
 4. Follow NVIDIA blueprints: Check PDFs in knowledge base
 
 Remember: This project demonstrates its own capabilities - we're using RAG to build a RAG system!
+
+## Using Prompt Templates
+
+Always use the templates in PROMPTS.md for consistency. Common workflows:
+
+### Starting a Session
+```
+Apply the status-check template from PROMPTS.md
+```
+
+### Implementing Features
+```
+Use the impl-plan template to implement video chunking service
+```
+
+### Getting Next Task
+```
+Apply the next-task template to see what to work on
+```
+
+### Updating Progress
+```
+Use the status-update template after completing the chunking service
+```
+
+### Debugging
+```
+Apply the bug template for the MongoDB connection issue
+```
+
+The templates ensure you:
+- Always check the knowledge base first
+- Update MongoDB status tracking
+- Follow PRD specifications
+- Document new patterns
+- Test properly
