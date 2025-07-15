@@ -65,6 +65,11 @@ PROMPT_METADATA = {
         "description": "Implement task from next-task output",
         "category": "development"
     },
+    "implement-targeted": {
+        "file": "development/implement-targeted.md",
+        "description": "Implement specific feature with full tracking",
+        "category": "development"
+    },
     "feature": {
         "file": "development/feature.md",
         "description": "Implement new feature",
