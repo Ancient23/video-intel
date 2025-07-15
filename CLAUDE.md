@@ -12,18 +12,31 @@ This is a complete redesign of VideoCommentator, transforming it into a comprehe
 
 ## Prompt Templates
 
-**IMPORTANT**: Always use the templates in `PROMPTS.md` for common tasks. Reference them by name:
-- **status-check** - Check current project status and next steps
-- **status-update** - Update MongoDB after completing work
-- **knowledge-query** - Query the dev knowledge base for patterns
-- **knowledge-add** - Add new patterns to knowledge base
-- **impl-plan** - Implement a component from PRD
-- **next-task** - Get next implementation priority
-- **feature-provider** - Add new provider integration
-- **bug** - Debug issues with knowledge base help
-- **test** - Add tests following patterns
+**IMPORTANT**: Prompts are now organized in `.claude/prompts/` directory. You can:
 
-Example usage: "Apply the status-check template from PROMPTS.md"
+1. **Reference prompts directly**:
+   ```
+   Use the prompt from .claude/prompts/project-management/status-check.md
+   ```
+
+2. **Execute prompts programmatically**:
+   ```
+   python scripts/prompt.py exec status-check
+   ```
+
+3. **View available prompts**:
+   ```
+   python scripts/prompt.py list
+   ```
+
+### Key Prompts:
+- **Project Management**: status-check, status-update, next-task
+- **Technical Debt**: debt-check, debt-add, debt-resolve
+- **Development**: impl-plan, feature, bug, test
+- **Knowledge Base**: knowledge-query, knowledge-add
+- **Workflows**: common-workflows
+
+For detailed prompt documentation, see `.claude/README.md`
 
 ## Reference Repository
 
