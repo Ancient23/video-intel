@@ -372,6 +372,143 @@ def monitor_workflow_health(self, workflow_id: str) -> Dict[str, Any]:
         raise
 
 
+@celery_app.task(bind=True, name='workers.orchestration_tasks.merge_provider_results')
+def merge_provider_results(self, provider_results: List[Dict[str, Any]], job_id: str) -> Dict[str, Any]:
+    """
+    Merge analysis results from multiple providers.
+    
+    Args:
+        provider_results: List of results from different providers
+        job_id: Processing job ID
+        
+    Returns:
+        Merged results
+    """
+    import asyncio
+    from models.scene import Scene
+    from models.processing_job import ProcessingJob
+    
+    try:
+        self.update_state(state='PROGRESS', meta={
+            'stage': 'merging_results',
+            'job_id': job_id
+        })
+        
+        # Group results by chunk
+        chunks_data = {}
+        providers_used = set()
+        total_scenes = 0
+        total_objects = 0
+        
+        for result in provider_results:
+            if not result.get('success', False):
+                logger.warning(f"Skipping failed provider result: {result.get('error')}")
+                continue
+                
+            provider = result.get('provider', 'unknown')
+            providers_used.add(provider)
+            
+            # Process each chunk result
+            for chunk_id, chunk_data in result.get('chunks', {}).items():
+                if chunk_id not in chunks_data:
+                    chunks_data[chunk_id] = {
+                        'chunk_id': chunk_id,
+                        'providers': {},
+                        'merged_scenes': [],
+                        'merged_objects': [],
+                        'merged_captions': []
+                    }
+                
+                # Store provider-specific data
+                chunks_data[chunk_id]['providers'][provider] = chunk_data
+                
+                # Merge scenes
+                if 'scenes' in chunk_data:
+                    chunks_data[chunk_id]['merged_scenes'].extend(chunk_data['scenes'])
+                    total_scenes += len(chunk_data['scenes'])
+                
+                # Merge objects
+                if 'objects' in chunk_data:
+                    chunks_data[chunk_id]['merged_objects'].extend(chunk_data['objects'])
+                    total_objects += len(chunk_data['objects'])
+                
+                # Merge captions
+                if 'captions' in chunk_data:
+                    chunks_data[chunk_id]['merged_captions'].extend(chunk_data['captions'])
+        
+        # Save merged results to MongoDB
+        asyncio.run(save_merged_results(job_id, chunks_data))
+        
+        return {
+            'job_id': job_id,
+            'chunks_processed': len(chunks_data),
+            'providers_used': list(providers_used),
+            'total_scenes': total_scenes,
+            'total_objects': total_objects,
+            'status': 'merged'
+        }
+        
+    except Exception as e:
+        logger.error(f"Result merging failed: {str(e)}", exc_info=True)
+        raise
+
+
+@celery_app.task(bind=True, name='workers.orchestration_tasks.finalize_video_analysis')
+def finalize_video_analysis(self, job_id: str, video_id: str) -> Dict[str, Any]:
+    """
+    Finalize video analysis and update all statuses.
+    
+    Args:
+        job_id: Processing job ID
+        video_id: Video ID
+        
+    Returns:
+        Finalization results
+    """
+    import asyncio
+    from models.video import Video, VideoStatus
+    from models.processing_job import ProcessingJob, JobStatus
+    from models.video_analysis_job import VideoAnalysisJob, AnalysisStatus
+    
+    try:
+        async def _finalize():
+            # Update video status
+            video = await Video.get(video_id)
+            if video:
+                video.status = VideoStatus.COMPLETED
+                await video.save()
+            
+            # Update processing job
+            job = await ProcessingJob.get(job_id)
+            if job:
+                job.status = JobStatus.COMPLETED
+                job.completed_at = datetime.utcnow()
+                job.progress = 100
+                job.current_step = "Analysis completed"
+                await job.save()
+            
+            # Update analysis job
+            analysis_job = await VideoAnalysisJob.find_one({"processing_job_id": job_id})
+            if analysis_job:
+                analysis_job.status = AnalysisStatus.COMPLETED
+                analysis_job.progress = 100
+                analysis_job.completed_at = datetime.utcnow()
+                await analysis_job.save()
+            
+            return {
+                'job_id': job_id,
+                'video_id': video_id,
+                'status': 'completed',
+                'finalized_at': datetime.utcnow().isoformat()
+            }
+        
+        return asyncio.run(_finalize())
+        
+    except Exception as e:
+        logger.error(f"Finalization failed: {str(e)}", exc_info=True)
+        raise
+
+
 @celery_app.task(bind=True, name='workers.orchestration_tasks.post_process_video')
 def post_process_video(self, video_id: str) -> Dict[str, Any]:
     """
@@ -398,3 +535,16 @@ def post_process_video(self, video_id: str) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Post-processing failed: {str(e)}", exc_info=True)
         raise
+
+
+async def save_merged_results(job_id: str, chunks_data: Dict[str, Any]):
+    """Save merged results to MongoDB."""
+    from models.processing_job import ProcessingJob
+    
+    job = await ProcessingJob.get(job_id)
+    if job:
+        job.result = {
+            'chunks': chunks_data,
+            'merge_timestamp': datetime.utcnow().isoformat()
+        }
+        await job.save()

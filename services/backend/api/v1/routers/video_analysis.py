@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query, Background
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from beanie import PydanticObjectId
+import logging
 
 from ....schemas.api.video_analysis import (
     VideoAnalysisRequest,
@@ -33,6 +34,7 @@ from ....core.deps import get_current_user  # Placeholder for authentication
 
 
 router = APIRouter(prefix="/video-analysis", tags=["video-analysis"])
+logger = logging.getLogger(__name__)
 
 
 # Provider capabilities - in production this would come from a service/config
@@ -568,16 +570,35 @@ async def start_analysis_pipeline(
     """
     Start the video analysis pipeline.
     
-    In production, this would trigger a Celery task.
+    Triggers the Celery task for video processing.
     """
-    # This is a placeholder - actual implementation would use Celery
-    print(f"Starting analysis pipeline for job {job_id}, video {video_id}")
-    print(f"Config: {analysis_config.model_dump()}")
-    print(f"Is retry: {is_retry}")
+    from ....workers.video_processing import process_video_full_pipeline
     
-    # In production:
-    # from ....workers.video_processing import process_video_full_pipeline
-    # process_video_full_pipeline.delay(job_id, video_id, analysis_config.model_dump())
+    # Trigger Celery task
+    task = process_video_full_pipeline.apply_async(
+        args=[job_id, video_id, analysis_config.model_dump()],
+        queue='orchestration',
+        task_id=f"{job_id}-pipeline",  # Use job_id as base for task_id for tracking
+        retry=True,
+        retry_policy={
+            'max_retries': 3,
+            'interval_start': 60,  # 1 minute
+            'interval_step': 120,  # 2 minutes
+            'interval_max': 600,   # 10 minutes
+        }
+    )
+    
+    # Store task ID in job metadata for tracking
+    try:
+        job = await ProcessingJob.get(job_id)
+        if job:
+            job.metadata['celery_task_id'] = task.id
+            job.metadata['is_retry'] = is_retry
+            await job.save()
+    except Exception as e:
+        logger.error(f"Failed to store task ID in job: {str(e)}")
+    
+    logger.info(f"Started analysis pipeline task {task.id} for job {job_id}, video {video_id}")
 
 
 def estimate_processing_duration(video_duration: float, analysis_config: AnalysisConfig) -> float:
