@@ -206,3 +206,59 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 .DS_Store
+
+
+# Video Intelligence Platform Specific
+
+# Development Knowledge Base
+dev-knowledge-base/knowledge/chromadb/
+dev-knowledge-base/knowledge/embeddings/
+dev-knowledge-base/knowledge/graphs/
+dev-knowledge-base/knowledge/summaries/
+dev-knowledge-base/docs/imported/
+
+# MongoDB data
+mongo-data/
+*.mongo
+mongodb/
+
+# Redis dumps
+dump.rdb
+redis-data/
+
+# Media files
+*.mp4
+*.avi
+*.mov
+*.mp3
+*.wav
+*.m4a
+uploads/
+media/
+video-chunks/
+processed-videos/
+output/
+
+# AWS credentials (if stored locally)
+.aws/
+
+# Docker volumes
+docker/volumes/
+
+# Knowledge base databases
+*.db
+*.sqlite
+*.chromadb
+
+# PDFs (optional - uncomment if not using Git LFS)
+# dev-knowledge-base/docs/pdfs/*.pdf
+
+# Temporary processing files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Cache directories not already covered
+.cache/
+*.cache
