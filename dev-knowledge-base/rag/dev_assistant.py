@@ -5,7 +5,6 @@ import chromadb
 from chromadb.config import Settings
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.chains import ConversationalRetrievalChain
-from langchain.memory import ConversationBufferMemory
 from langchain.schema import Document
 from langchain_community.vectorstores import Chroma
 import re
@@ -18,12 +17,6 @@ class DevelopmentAssistant:
         # Initialize OpenAI
         self.llm = ChatOpenAI(temperature=0, model_name="gpt-4")
         self.embeddings = OpenAIEmbeddings()
-        
-        # Initialize memory
-        self.memory = ConversationBufferMemory(
-            memory_key="chat_history",
-            return_messages=True
-        )
         
         # Initialize ChromaDB client
         self.chroma_client = chromadb.PersistentClient(
@@ -63,6 +56,13 @@ class DevelopmentAssistant:
                 "pdf_knowledge"
             ]
         
+        # Generate query embedding using OpenAI
+        try:
+            query_embedding = self.embeddings.embed_query(query)
+        except Exception as e:
+            print(f"Error generating query embedding: {e}")
+            return "Error: Could not generate query embedding. Please check OpenAI API configuration."
+        
         # Search in collections
         all_results = []
         
@@ -72,9 +72,9 @@ class DevelopmentAssistant:
                 continue
                 
             try:
-                # Query the collection
+                # Query the collection with embeddings
                 results = collection.query(
-                    query_texts=[query],
+                    query_embeddings=[query_embedding],
                     n_results=5,
                     include=["documents", "metadatas", "distances"]
                 )
@@ -127,7 +127,7 @@ Consider:
 Provide a concise, actionable response."""
         
         try:
-            response = self.llm.predict(prompt)
+            response = self.llm.invoke(prompt).content
             return response
         except Exception as e:
             return f"Error generating response: {e}\n\nContext found:\n{context}"
@@ -152,6 +152,14 @@ Provide a concise, actionable response."""
         """Find similar components in knowledge base"""
         similar = []
         
+        # Generate query embedding
+        try:
+            query_text = f"{component} implementation pattern structure"
+            query_embedding = self.embeddings.embed_query(query_text)
+        except Exception as e:
+            print(f"Error generating embedding for component search: {e}")
+            return similar
+        
         # Search for component patterns
         collections_to_search = ["implementation_guides", "architectural_decisions", "lessons_learned"]
         
@@ -162,7 +170,7 @@ Provide a concise, actionable response."""
                 
             try:
                 results = collection.query(
-                    query_texts=[f"{component} implementation pattern structure"],
+                    query_embeddings=[query_embedding],
                     n_results=5,
                     include=["documents", "metadatas"]
                 )

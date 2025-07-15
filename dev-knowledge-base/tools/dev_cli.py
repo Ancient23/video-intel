@@ -1,6 +1,7 @@
 import click
 import os
 import sys
+import builtins
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
@@ -89,9 +90,12 @@ def suggest(component: str):
         table.add_column("Details", style="green")
         
         for key, value in suggestions.items():
-            if isinstance(value, list):
+            # Debug: check what 'list' is at this point
+            # console.print(f"[yellow]Debug: list is {list}, type is {type(list)}[/yellow]")
+            # console.print(f"[yellow]Debug: value is {value}, type is {type(value)}[/yellow]")
+            if isinstance(value, builtins.list):
                 value_str = "\n".join(f"• {item}" for item in value)
-            elif isinstance(value, dict):
+            elif isinstance(value, builtins.dict):
                 value_str = "\n".join(f"• {k}: {v}" for k, v in value.items())
             else:
                 value_str = str(value)
@@ -101,6 +105,8 @@ def suggest(component: str):
         console.print(table)
     except Exception as e:
         console.print(f"[red]Error getting suggestions: {e}[/red]")
+        import traceback
+        traceback.print_exc()
 
 
 @cli.command()
