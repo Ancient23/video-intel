@@ -12,7 +12,7 @@ This is a complete redesign of VideoCommentator, transforming it into a comprehe
 
 ## Reference Repository
 
-**Old VideoCommentator Repository**: `[OLD_REPO_PATH]`
+**Old VideoCommentator Repository**: `/Users/filip/Documents/Source/VideoCommentator-MonoRepo` 
 
 Key patterns to reference from the old repository:
 - Provider abstraction: `services/backend/services/video_analysis/`
@@ -196,7 +196,7 @@ cd services/backend && python -m api.generate_docs
 
 1. Check the PRD: `docs/new/VIDEO_INTELLIGENCE_PRD.md`
 2. Query knowledge base: `./dev-cli ask "[question]"`
-3. Reference old code: Look in `[OLD_REPO_PATH]`
+3. Reference old code: Look in `/Users/filip/Documents/Source/VideoCommentator-MonoRepo` 
 4. Follow NVIDIA blueprints: Check PDFs in knowledge base
 
 Remember: This project demonstrates its own capabilities - we're using RAG to build a RAG system!
