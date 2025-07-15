@@ -4,7 +4,7 @@ from typing import List, Dict, Optional, Any
 from pathlib import Path
 from datetime import datetime
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain.docstore.document import Document
 import chromadb
 from chromadb.config import Settings
@@ -14,14 +14,21 @@ import hashlib
 class KnowledgeExtractor:
     """Extracts and processes knowledge from documents"""
     
-    def __init__(self, chroma_path: str = "./knowledge/chromadb"):
+    def __init__(self, chroma_path: str = "./knowledge/chromadb", use_embeddings: bool = True):
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200,
             length_function=len,
             separators=["\n\n", "\n", " ", ""]
         )
-        self.embeddings = OpenAIEmbeddings()
+        
+        self.use_embeddings = use_embeddings
+        if self.use_embeddings:
+            try:
+                self.embeddings = OpenAIEmbeddings()
+            except Exception as e:
+                print(f"Warning: Could not initialize OpenAI embeddings: {e}")
+                self.use_embeddings = False
         
         # Initialize ChromaDB with persistent storage
         self.chroma_client = chromadb.PersistentClient(
@@ -67,21 +74,36 @@ class KnowledgeExtractor:
                 
                 # Create embedding and store
                 try:
-                    embedding = self.embeddings.embed_query(lesson['text'])
-                    
-                    collection.add(
-                        embeddings=[embedding],
-                        documents=[lesson['text']],
-                        metadatas=[{
-                            "source": doc['path'],
-                            "type": lesson['type'],
-                            "importance": lesson['importance'],
-                            "context": lesson.get('context', ''),
-                            "extracted_at": datetime.now().isoformat(),
-                            "title": doc.get('title', '')
-                        }],
-                        ids=[lesson_id]
-                    )
+                    if self.use_embeddings:
+                        embedding = self.embeddings.embed_query(lesson['text'])
+                        
+                        collection.add(
+                            embeddings=[embedding],
+                            documents=[lesson['text']],
+                            metadatas=[{
+                                "source": doc['path'],
+                                "type": lesson['type'],
+                                "importance": lesson['importance'],
+                                "context": lesson.get('context', ''),
+                                "extracted_at": datetime.now().isoformat(),
+                                "title": doc.get('title', '')
+                            }],
+                            ids=[lesson_id]
+                        )
+                    else:
+                        # Store without embeddings
+                        collection.add(
+                            documents=[lesson['text']],
+                            metadatas=[{
+                                "source": doc['path'],
+                                "type": lesson['type'],
+                                "importance": lesson['importance'],
+                                "context": lesson.get('context', ''),
+                                "extracted_at": datetime.now().isoformat(),
+                                "title": doc.get('title', '')
+                            }],
+                            ids=[lesson_id]
+                        )
                     
                     extracted_lessons.append({
                         "id": lesson_id,

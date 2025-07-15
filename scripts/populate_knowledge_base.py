@@ -9,13 +9,17 @@ from typing import Dict, Any
 import motor.motor_asyncio
 from beanie import init_beanie, Document
 from pydantic import BaseModel, Field
+from dotenv import load_dotenv
 
 # Add the project root to the path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
-from dev_knowledge_base.ingestion.inventory_old_docs import DocumentInventory
-from dev_knowledge_base.ingestion.extract_knowledge import KnowledgeExtractor
-from dev_knowledge_base.ingestion.pdf_extractor import PDFKnowledgeExtractor
+# Import from absolute path
+sys.path.insert(0, str(project_root / "dev-knowledge-base"))
+from ingestion.inventory_old_docs import DocumentInventory
+from ingestion.extract_knowledge import KnowledgeExtractor
+from ingestion.pdf_extractor import PDFKnowledgeExtractor
 
 
 # MongoDB Models
@@ -117,6 +121,12 @@ async def main(old_repo_path: str, pdf_dir: str):
     print(f"📚 Populating knowledge base from: {old_repo_path}")
     print(f"📄 PDFs directory: {pdf_dir}")
     
+    # Load environment variables from .env file
+    env_path = project_root / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+        print("✅ Loaded environment variables from .env file")
+    
     # Initialize MongoDB
     try:
         await init_mongodb()
@@ -136,6 +146,14 @@ async def main(old_repo_path: str, pdf_dir: str):
     await report.insert()
     
     try:
+        # Check if OpenAI API key is set
+        openai_key = os.getenv("OPENAI_API_KEY", "")
+        use_embeddings = openai_key and openai_key != "your-api-key"
+        
+        if not use_embeddings:
+            print("\n⚠️  Warning: No valid OpenAI API key found. Skipping embeddings generation.")
+            print("To enable embeddings, set OPENAI_API_KEY environment variable.")
+        
         # Step 1: Inventory old repository
         print("\n📋 Step 1: Inventorying old repository...")
         inventory = DocumentInventory(old_repo_path)
@@ -149,7 +167,7 @@ async def main(old_repo_path: str, pdf_dir: str):
         
         # Step 2: Process PDFs
         print("\n📄 Step 2: Processing PDF documents...")
-        pdf_extractor = PDFKnowledgeExtractor()
+        pdf_extractor = PDFKnowledgeExtractor(use_embeddings=use_embeddings)
         pdf_results = pdf_extractor.extract_all_pdfs(pdf_dir)
         
         if pdf_results:
@@ -159,7 +177,7 @@ async def main(old_repo_path: str, pdf_dir: str):
         
         # Step 3: Extract and store knowledge
         print("\n🧠 Step 3: Extracting and storing knowledge...")
-        extractor = KnowledgeExtractor()
+        extractor = KnowledgeExtractor(use_embeddings=use_embeddings)
         
         extraction_results = {}
         for category, documents in docs.items():

@@ -1,0 +1,109 @@
+{
+  "total_documents": 30,
+  "categories": {
+    "lessons_learned": {
+      "count": 3,
+      "total_size": 22248,
+      "files": [
+        "README.md",
+        "history/completed-features-doc.md",
+        "history/lessons-learned.md"
+      ]
+    },
+    "architectural_decisions": {
+      "count": 10,
+      "total_size": 116809,
+      "files": [
+        "planning/technical-debt.md",
+        "current/feature-roadmap.md",
+        "current/implementation-plan.md",
+        "future/implementation-plan-ar-vr.md",
+        "future/implementation-plan-realtime.md",
+        "future/multi-tenant-auth-plan.md",
+        "reference/architecture-analysis.md",
+        "reference/architecture.md",
+        "reference/nvidia-integration-status.md",
+        "reference/design/design-system.md"
+      ]
+    },
+    "implementation_guides": {
+      "count": 11,
+      "total_size": 69697,
+      "files": [
+        "guides/integration/nvidia-implementation.md",
+        "guides/integration/nvidia-api-reference.md",
+        "guides/setup/nvidia-production.md",
+        "guides/setup/nvidia-setup.md",
+        "guides/setup/docker.md",
+        "guides/operations/ecs-memory-config.md",
+        "guides/operations/s3-uploads.md",
+        "guides/operations/pydantic-v2.md",
+        "guides/operations/ui-testing.md",
+        "guides/deployment/ci-cd-setup-guide.md",
+        "guides/deployment/aws-ecs.md"
+      ]
+    },
+    "api_documentation": {
+      "count": 3,
+      "total_size": 49095,
+      "files": [
+        "history/production-fixes.md",
+        "reference/api.md",
+        "reference/keyframe-detection-providers.md"
+      ]
+    },
+    "ui_patterns": {
+      "count": 2,
+      "total_size": 15713,
+      "files": [
+        "current/requirements-and-goals.md",
+        "reference/quick-reference-doc.md"
+      ]
+    },
+    "known_issues": {
+      "count": 1,
+      "total_size": 6855,
+      "files": [
+        "planning/known-issues.md"
+      ]
+    }
+  },
+  "priority_documents": [
+    {
+      "category": "lessons_learned",
+      "path": "history/lessons-learned.md",
+      "title": "lessons-learned"
+    },
+    {
+      "category": "architectural_decisions",
+      "path": "current/implementation-plan.md",
+      "title": "implementation-plan"
+    },
+    {
+      "category": "architectural_decisions",
+      "path": "reference/architecture.md",
+      "title": "architecture"
+    },
+    {
+      "category": "architectural_decisions",
+      "path": "reference/design/design-system.md",
+      "title": "design-system"
+    },
+    {
+      "category": "implementation_guides",
+      "path": "guides/operations/pydantic-v2.md",
+      "title": "pydantic-v2"
+    },
+    {
+      "category": "api_documentation",
+      "path": "reference/api.md",
+      "title": "api"
+    },
+    {
+      "category": "known_issues",
+      "path": "planning/known-issues.md",
+      "title": "known-issues"
+    }
+  ],
+  "generated_at": "2025-07-14T21:03:35.147809"
+}

@@ -1,0 +1,2165 @@
+{
+  "extraction_id": "20250714_210634",
+  "statistics": {
+    "inventory_report": {
+      "total_documents": 30,
+      "categories": {
+        "lessons_learned": {
+          "count": 3,
+          "total_size": 22248,
+          "files": [
+            "README.md",
+            "history/completed-features-doc.md",
+            "history/lessons-learned.md"
+          ]
+        },
+        "architectural_decisions": {
+          "count": 10,
+          "total_size": 116809,
+          "files": [
+            "planning/technical-debt.md",
+            "current/feature-roadmap.md",
+            "current/implementation-plan.md",
+            "future/implementation-plan-ar-vr.md",
+            "future/implementation-plan-realtime.md",
+            "future/multi-tenant-auth-plan.md",
+            "reference/architecture-analysis.md",
+            "reference/architecture.md",
+            "reference/nvidia-integration-status.md",
+            "reference/design/design-system.md"
+          ]
+        },
+        "implementation_guides": {
+          "count": 11,
+          "total_size": 69697,
+          "files": [
+            "guides/integration/nvidia-implementation.md",
+            "guides/integration/nvidia-api-reference.md",
+            "guides/setup/nvidia-production.md",
+            "guides/setup/nvidia-setup.md",
+            "guides/setup/docker.md",
+            "guides/operations/ecs-memory-config.md",
+            "guides/operations/s3-uploads.md",
+            "guides/operations/pydantic-v2.md",
+            "guides/operations/ui-testing.md",
+            "guides/deployment/ci-cd-setup-guide.md",
+            "guides/deployment/aws-ecs.md"
+          ]
+        },
+        "api_documentation": {
+          "count": 3,
+          "total_size": 49095,
+          "files": [
+            "history/production-fixes.md",
+            "reference/api.md",
+            "reference/keyframe-detection-providers.md"
+          ]
+        },
+        "ui_patterns": {
+          "count": 2,
+          "total_size": 15713,
+          "files": [
+            "current/requirements-and-goals.md",
+            "reference/quick-reference-doc.md"
+          ]
+        },
+        "known_issues": {
+          "count": 1,
+          "total_size": 6855,
+          "files": [
+            "planning/known-issues.md"
+          ]
+        }
+      },
+      "priority_documents": [
+        {
+          "category": "lessons_learned",
+          "path": "history/lessons-learned.md",
+          "title": "lessons-learned"
+        },
+        {
+          "category": "architectural_decisions",
+          "path": "current/implementation-plan.md",
+          "title": "implementation-plan"
+        },
+        {
+          "category": "architectural_decisions",
+          "path": "reference/architecture.md",
+          "title": "architecture"
+        },
+        {
+          "category": "architectural_decisions",
+          "path": "reference/design/design-system.md",
+          "title": "design-system"
+        },
+        {
+          "category": "implementation_guides",
+          "path": "guides/operations/pydantic-v2.md",
+          "title": "pydantic-v2"
+        },
+        {
+          "category": "api_documentation",
+          "path": "reference/api.md",
+          "title": "api"
+        },
+        {
+          "category": "known_issues",
+          "path": "planning/known-issues.md",
+          "title": "known-issues"
+        }
+      ],
+      "generated_at": "2025-07-14T21:06:37.038215"
+    },
+    "extraction_results": {
+      "lessons_learned": {
+        "collection": "lessons_learned",
+        "processed_count": 291,
+        "total_docs": 3,
+        "extracted_lessons": [
+          {
+            "id": "d9536ed3ac7ac58f",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "e016eb5605f60174",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "f44ff4da6bc79c89",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "a90bfdaa1eb4b079",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "bc46dc6ab160ba1e",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "f6d441925b35f936",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "8c802b98e06f12e1",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "bd6e0501d969af32",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "527380dea94bfdad",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "4aad0ccee7115b53",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "be5d1147610471fa",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "7b46f41e400ce0d6",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "e7b30e979228f369",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "05cd6330aa01dc05",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "4cc94164ef7c84bb",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "0ec5b3c69ceb54a9",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "9378e0ef4fef4fb1",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "faa4e44e8ced9c96",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "226ffc26865eb99d",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "99d1eecdb95766d8",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "d2b0a08c5a8a4e25",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "d35dc4b8563d3eb9",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "0ef78d1ce5f9d809",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "8be5cb398031087e",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "2c790c2fc97d1a81",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "53a6fd3717ab5728",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "4b7c022403038828",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "9dd6d5dee93ccff8",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "71556258c860e526",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "8d2a5dbb971a3bbc",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "5341c9939ecadc91",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "4d5f5ef00b4a58e1",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "c43eb925a54984af",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "9013d172cb2cf5b0",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "1b2790ee2ea574e3",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "393ec823d15fc2cb",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "2484337f0770e6be",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "3cdcc2f74cda0104",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "04748ecd16a23667",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "3bf2a004a7bb3e12",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "3147a87e6bab2bf8",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "254385be6f592cc1",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "7080a0fa62ad7d84",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "a02320fa9f81af84",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "03d0135225d23f22",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "d43b8afea78747fe",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "a7ef6ce6a71ac5f4",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "59ede3db6de77777",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "1f45e9244ac8f322",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "b1f235f41bd38aef",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "9fbd8aff58057fe9",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "94b32088a46ec244",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "6d459841a4502af8",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "ed56e26864f343cb",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "7d98a2c2ebfa9fec",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "8e2c95dfac7b0f9d",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "9131874c5d498cea",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "27d835882c0e3237",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "7cc55014b4c5b5ef",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "c0cff3f37e2198c1",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "327fc7807b685a94",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "591d6131ca503b69",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "11dd76d009cd30c6",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "6c07bf3259e384b8",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "326e8b238134f394",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "3ed32d01dc23837f",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "77d88921f488544e",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "2cccc1220975b1b6",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "aa25137dd24eeec0",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "3e12edd4787ad1a7",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "a6c5f04194838dc4",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "e47339c0ac4d55aa",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "0428c6c672d07826",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "216be73022d04c9c",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "b223c97e5b33a196",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "b1b38b3d2c6629f3",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "34828b151d5cf507",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "b66d35ca9865290e",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "ce733b04f36a5f50",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "55f3ec96283ce004",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "94f7f08339be0d74",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "d5ea29e69ff86a8b",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "d935db1c7f4213a7",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "262e1f304252af24",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "ce733b04f36a5f50",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "37ea6935f1d3bb87",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "0559a0c707923df8",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "1d12aeedab6a2584",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "2937c8fdc44646c2",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "0d25b3afba5a613d",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "1c512b7940483230",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "f73416d050233dfe",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "455bc5b060f8a069",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "92efb482f33de14f",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "ae99e37b947eea34",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "138e7ccec0f0e05d",
+            "type": "lesson",
+            "source": "README.md"
+          },
+          {
+            "id": "997ea2c7d70f51e9",
+            "type": "best_practice",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "0642dc18e04ae11d",
+            "type": "pattern",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "116735bae2329449",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "3fcbefc25e15c777",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "4912b0311a6fce6a",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "91524ea8b5615486",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "64cbdf900e761073",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "339d942c9159ce16",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "acb99a9c5b45bcd5",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "8b4c30aef823ccf3",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "99fab987f351633f",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "b7672b2f2e48db77",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "aabf8cb3d5992ca2",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "1d801a55c926023e",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "2005956be7e3593d",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "02956c548f83986f",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "4111145a6f448ebf",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "32b520f262779048",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "3977dd332a3545ef",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "2ad9198c14a3e312",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "a8ca88dfe64929b1",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "b0c81fdfca305d4f",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "6f6281d0daef4377",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "149ae6942e9a3c69",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "ab4a1d2d0bfe514e",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "ed925a0549447e0a",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "df086d564f48bc04",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "0292fc813a7d0338",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "93eeb78266d64ae5",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "91727fcd0d2aa5f5",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "aa91182cc326d4b9",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "65bd3eab4bff4214",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "f71311888e2dd069",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "10f05ee3a233a1b0",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "e6d59c29f2e3374c",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "ebd245e53bbfa97d",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "695140ebf17bb703",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "ebfd21b580db14ce",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "6524bb7ae0d71723",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "99c98d2a009bd270",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "3e902ca6020cc15f",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "68ad126308120554",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "5cc5bbe6bf2beb0e",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "f9230bee20b9b9cb",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "88fc5a4e94888530",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "47ac0060f550afcf",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "5c56b619ef04854e",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "e867c73d1698c240",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "bfd204be3c08e053",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "495801bc262baed3",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "71856ac89e6fd955",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "4d46539a86eca93b",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "6dc63587dcc3f8c4",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "89bc9487bf6a3e53",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "0d228c1772c505c3",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "55a79a07c0aab888",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "75cecc8413792c56",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "d634bb7798b2f321",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "f77fc24e113213e6",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "c71a0e837f6b9c97",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "c49df2d2f3c3bf4d",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "4227eafba6a2ba3f",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "a6e526b8d505b217",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "29abe916ed50e6fc",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "ccca291356cd6dce",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "bd3b56ca8811e458",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "2f30f79ce1b206ad",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "fef4e7b78a7f6b4e",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "c6071fbf413601c7",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "ef012e393864420b",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "5d47059c1c195e44",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "82f8a24ef7e42c33",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "431ad11af855cb0b",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "2de97c80153b05ae",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "3c30f5dcacb112e9",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "ff4bc4565ea41657",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "5cdcc96a62117825",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "6effaacca61f260d",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "5df5e595b22326af",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "82e703e1eeea1c46",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "de92ec4ab232219e",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "948e7d4b09a9ff10",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "0f9e1f78446a9a07",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "b6d0e34187102800",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "9bfcbaf83109e7fe",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "d16c5a27a0fa4350",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "f4c943c93d082b3e",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "bfa81514eb564538",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "24e708a540faa140",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "894f172c9475b579",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "0132e923351e8e12",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "7e18ebd499002be7",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "bdd0556ab693810a",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "108169c668cdfb5c",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "04cc141a18c1d1de",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "f471512eb4edc443",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "93ab471d77e9ccec",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "f777c8deb8fd505b",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "80bf50a56e8c3f5f",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "1487e8aa49aa05c4",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "2dd9647c1c54005e",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "3022d3850fc4c823",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "ad924a1bba03c3f6",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "058f7f82d24edfba",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "16394d1301b0ce10",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "5109a20e8492bc91",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "4262e09e2f79d17c",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "1069c9f0c0f2f066",
+            "type": "lesson",
+            "source": "history/completed-features-doc.md"
+          },
+          {
+            "id": "a0e1b9796f3e6568",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "aa93ca2a35c3039b",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "b24bba0cad941f2b",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "9de3d4cb2f8431d0",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "49a7ee16bea77ec4",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "bfc695e1e10734d6",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "9d25057d255d4378",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "47b43862ac5c13c2",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "5796c9d3f767d165",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "1a671382afb1aedf",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "b46e3a6cb95b77e7",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "ccab0a41af44b77f",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "0e27a1dc11e01d56",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "dec0012b8fe3b6e4",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "eab303875045ecd3",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "ea8f8ab025401383",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "313f76e71ddbe933",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "46e2afaa9fa25baa",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "764b0e7f47c571c2",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "0ca32f2b9ae216d1",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "4fcb65ba2c677193",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "e3a8bc4fc5d127e3",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "d5b5e12aa10e6e1e",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "59bbab65e69ad589",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "e83b4cdf99ce84bd",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "2aae995865637163",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "1338f8c0f4132cf4",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "ee67605a1c3b062e",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "3d9b0c25b69f8929",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "1fcc3e65997e7d37",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "d9d9f2ddacc8338a",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "604a2e7b2e833312",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "b9b2ad70205b8c93",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "777e395d1f72610b",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "a194222cbacb86e0",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "826e49418b022968",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "c1869f79ca4a1856",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "a864369fd99b194c",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "3466aa838d17dc3b",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "84012abead4e8d71",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "4aee202a39646f9f",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "5752d171899b4a1a",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "a8277798f93d6f8c",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "add22b8dd1ae84d8",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "10e6d82b2afb691b",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "5de778b3481deb14",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "cfebe44ac0bb0467",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "a247c73aabb234c9",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "e7ca20a839522368",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "af77c6232b893748",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "0be1dd03ef24f8b1",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "4e77d2a1cc69677d",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "1abaee3b72eeca5a",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "78be10e51c22928e",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "78d69b3ba562581f",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "16ed5910c63ff1d6",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "8dee69063f5e9dff",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "5a3aa3afb41391b9",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "31f2da5e34b67771",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "8e2ff33766aa021d",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "41b8992cb2f75143",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "048bf9f99419e96a",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "8bfdc615ccc6c9c3",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "4667133ed2fda472",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "e2ab3ae772774808",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "2745bf0e2e2b9c4c",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "1164f410e312bd5d",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "d901774a7f22925e",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "178a8d2eb7573eb1",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "0c2c0804fc8850c1",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "b8cc2131f2e84ca8",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "6451b16c1a9d47d5",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "cf891e0939e174f8",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "d6c60116825185ff",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "78e58240a5e39958",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "e755ae32090d18f5",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "742ffb9cce219ecf",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "ebac7c7ed36ec1f0",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "e4e2821d19643aab",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "b3094e4bfc909978",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "2b89a3ffe1facaab",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "160a46d7bfa39349",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "063946ec79fb5255",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "a639a5ce9e8fdcff",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "979472531863982d",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "7c0a4f35628a39c4",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          },
+          {
+            "id": "18a20ac21bde0866",
+            "type": "lesson",
+            "source": "history/lessons-learned.md"
+          }
+        ]
+      },
+      "architectural_decisions": {
+        "collection": "architectural_decisions",
+        "processed_count": 0,
+        "total_docs": 10,
+        "decisions": []
+      },
+      "implementation_guides": {
+        "collection": "implementation_guides",
+        "processed_count": 93,
+        "total_docs": 11
+      },
+      "api_documentation": {
+        "collection": "api_documentation",
+        "processed_count": 75,
+        "total_docs": 3,
+        "endpoints": [
+          {
+            "method": "PUT",
+            "path": "to",
+            "description": "verify environment variables in container",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "PUT",
+            "path": "bucket",
+            "description": "permissions issue",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "PUT",
+            "path": "without",
+            "description": "assertions",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/ping",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/commentary/orchestrate/",
+            "description": "` (Main Endpoint)",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "PUT",
+            "path": "files",
+            "description": "`s3_output_key_prefix` (string, optional): S3 key prefix for output files",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "PUT",
+            "path": "files",
+            "description": "`s3_output_key_prefix` (string, optional): S3 key prefix for output files",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/commentary/generate/",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/timeline/generate/",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/voiceover/script/from_timeline/",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/voiceover/script/from_video/",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/timeline/shot",
+            "description": "list/`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/voiceover/script/from_shots/",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/voiceover/audio/generate/",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/video/mux/",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/summarize/from_timeline/",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/summarize/from_video/",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/providers",
+            "description": "` (Legacy)",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "information",
+            "description": "about available video analysis providers in legacy format. For new development, use the capability-based endpoints below.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/providers/",
+            "description": "` (New Capability-Based Endpoint)",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "detailed",
+            "description": "information about all providers with their capabilities.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/providers/{provider_name}/capabilities",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "detailed",
+            "description": "information about all providers with their capabilities.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/providers/recommend",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "provider",
+            "description": "recommendations based on desired capabilities.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/providers/suggest",
+            "description": "combination`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "optimal",
+            "description": "provider combination for requested capabilities.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/providers/health",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/providers/{provider_name}/analyze",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/nvidia/functions",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "available",
+            "description": "NVIDIA API functions (requires NVIDIA_API_KEY).",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/nvidia/test",
+            "description": "function`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/tasks/status/{task_id}",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "the",
+            "description": "status of any async task.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/tasks/active",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "all",
+            "description": "active tasks.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/presign",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "a",
+            "description": "vailable NVIDIA API functions (requires NVIDIA_API_KEY).",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/presign/download",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "a",
+            "description": "vailable NVIDIA API functions (requires NVIDIA_API_KEY).",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/videos/test_videos",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "a",
+            "description": "vailable NVIDIA API functions (requires NVIDIA_API_KEY).",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/cache/stats",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "cache",
+            "description": "and cost optimization statistics.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/storage/optimize",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/voices/openai",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/voices/elevenlabs",
+            "description": "`",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/ping",
+            "description": "Health check endpoint to verify the API is running.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/commentary/orchestrate/",
+            "description": "(Main Endpoint)",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/commentary/generate/",
+            "description": "Alias for `/commentary/orchestrate/` for backward compatibility.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/timeline/generate/",
+            "description": "Generate a timeline with scene analysis from a video using selected providers. The API supports both single-provider (legacy) and multi-provider modes. When multiple providers are specified, results are intelligently merged to provide comprehensive scene analysis.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/voiceover/script/from_timeline/",
+            "description": "Generate a voiceover script from a timeline.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/voiceover/script/from_video/",
+            "description": "Generate a voiceover script directly from a video (creates timeline first).",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/voiceover/script/from_shots/",
+            "description": "Generate a voiceover script from a shot list (more cinematic approach).",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/voiceover/audio/generate/",
+            "description": "Generate timed voiceover audio segments using TTS.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/video/mux/",
+            "description": "Mux audio commentary onto the original video.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/summarize/from_timeline/",
+            "description": "Generate a summary from a timeline.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/summarize/from_video/",
+            "description": "Generate a summary directly from a video.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/providers",
+            "description": "(Legacy)",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/providers/",
+            "description": "(New Capability-Based Endpoint)",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/providers/{provider_name}/capabilities",
+            "description": "Get detailed capability information for a specific provider.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/providers/recommend",
+            "description": "Get provider recommendations based on desired capabilities.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/providers/health",
+            "description": "Check health status of all providers.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/providers/{provider_name}/analyze",
+            "description": "Analyze a frame using a specific provider's capabilities.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/nvidia/functions",
+            "description": "Get available NVIDIA API functions (requires NVIDIA_API_KEY).",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/tasks/status/{task_id}",
+            "description": "Get the status of any async task.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/tasks/active",
+            "description": "Get all active tasks.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/presign",
+            "description": "Get a presigned URL for S3 upload.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/presign/download",
+            "description": "Get a presigned URL for S3 download.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/videos/test_videos",
+            "description": "Get a list of available test videos.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/cache/stats",
+            "description": "Get cache and cost optimization statistics.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "POST",
+            "path": "/storage/optimize",
+            "description": "Set up S3 lifecycle policies for cost optimization.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/voices/openai",
+            "description": "List available OpenAI TTS voices.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "GET",
+            "path": "/voices/elevenlabs",
+            "description": "List available ElevenLabs voices.",
+            "parameters": {},
+            "response": ""
+          },
+          {
+            "method": "PUT",
+            "path": "only",
+            "description": "| <https://docs.aws.amazon.com/rekognition/latest/dg/person-search-procedure.html> |",
+            "parameters": {},
+            "response": ""
+          }
+        ]
+      },
+      "ui_patterns": {
+        "collection": "ui_patterns",
+        "processed_count": 21,
+        "total_docs": 2
+      },
+      "known_issues": {
+        "collection": "known_issues",
+        "processed_count": 0,
+        "total_docs": 1,
+        "issues": []
+      }
+    },
+    "pdf_summary": {
+      "total_pdfs": 2,
+      "patterns_extracted": {
+        "video_pipeline": 3,
+        "rag_implementation": 24,
+        "graph_construction": 12,
+        "deployment_options": 18,
+        "performance_optimization": 13,
+        "multimodal_processing": 12
+      },
+      "processed_files": [
+        "NVIDIA-Powered Architecture for Video Understanding and Conversational AI.pdf",
+        "Multi\u2011Modal AI Pipeline_ NVIDIA Blueprint vs. Custom Solutions (Q&A).pdf"
+      ],
+      "extraction_timestamp": "2025-07-14T21:07:05.887161"
+    },
+    "total_stored": 1032,
+    "patterns_found": {
+      "pydantic_models": 756,
+      "api_endpoints": 11,
+      "celery_tasks": 7,
+      "docker_configs": 2,
+      "deployment_scripts": 2,
+      "test_patterns": 224,
+      "utility_functions": 0
+    },
+    "configs_found": {
+      "environment_variables": 4,
+      "aws_configs": 2,
+      "database_configs": 0,
+      "api_configs": 0
+    }
+  },
+  "completed_at": "2025-07-14T21:09:15.175730"
+}

@@ -3,9 +3,9 @@ import json
 from typing import List, Dict, Optional, Any
 from pathlib import Path
 from datetime import datetime
-from langchain.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 import chromadb
 from chromadb.config import Settings
 import hashlib
@@ -14,14 +14,21 @@ import hashlib
 class PDFKnowledgeExtractor:
     """Extract knowledge from NVIDIA Blueprint PDFs and other technical documentation"""
     
-    def __init__(self, chroma_path: str = "./knowledge/chromadb"):
+    def __init__(self, chroma_path: str = "./knowledge/chromadb", use_embeddings: bool = True):
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1500,
             chunk_overlap=300,
             length_function=len,
             separators=["\n\n", "\n", ". ", " ", ""]
         )
-        self.embeddings = OpenAIEmbeddings()
+        
+        self.use_embeddings = use_embeddings
+        if self.use_embeddings:
+            try:
+                self.embeddings = OpenAIEmbeddings()
+            except Exception as e:
+                print(f"Warning: Could not initialize OpenAI embeddings: {e}")
+                self.use_embeddings = False
         
         # Initialize ChromaDB
         self.chroma_client = chromadb.PersistentClient(
@@ -324,22 +331,33 @@ class PDFKnowledgeExtractor:
                         pattern['content'][:100]
                     )
                     
-                    # Create embedding
-                    embedding = self.embeddings.embed_query(pattern['content'])
-                    
                     # Store in ChromaDB
-                    self.pdf_collection.add(
-                        embeddings=[embedding],
-                        documents=[pattern['content']],
-                        metadatas=[{
-                            "source": source_pdf,
-                            "page": pattern.get('page', 0),
-                            "pattern_type": pattern_type,
-                            "type": pattern.get('type', pattern_type),
-                            "extracted_at": datetime.now().isoformat()
-                        }],
-                        ids=[pattern_id]
-                    )
+                    if self.use_embeddings:
+                        embedding = self.embeddings.embed_query(pattern['content'])
+                        self.pdf_collection.add(
+                            embeddings=[embedding],
+                            documents=[pattern['content']],
+                            metadatas=[{
+                                "source": source_pdf,
+                                "page": pattern.get('page', 0),
+                                "pattern_type": pattern_type,
+                                "type": pattern.get('type', pattern_type),
+                                "extracted_at": datetime.now().isoformat()
+                            }],
+                            ids=[pattern_id]
+                        )
+                    else:
+                        self.pdf_collection.add(
+                            documents=[pattern['content']],
+                            metadatas=[{
+                                "source": source_pdf,
+                                "page": pattern.get('page', 0),
+                                "pattern_type": pattern_type,
+                                "type": pattern.get('type', pattern_type),
+                                "extracted_at": datetime.now().isoformat()
+                            }],
+                            ids=[pattern_id]
+                        )
                 except Exception as e:
                     print(f"Error storing pattern in ChromaDB: {e}")
                     continue
