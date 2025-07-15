@@ -49,9 +49,9 @@ class Database:
     @classmethod
     async def create_indexes(cls):
         """Ensure all indexes are created"""
-        for model in document_models:
-            await model.create_indexes()
-        print("Database indexes created")
+        # Beanie doesn't have create_indexes method
+        # Indexes are created automatically when documents are used
+        print("Database indexes will be created on first use")
 
 
 # Convenience functions
