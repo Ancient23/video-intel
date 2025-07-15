@@ -8,10 +8,32 @@ This directory contains structured prompts for AI coding assistants (Claude Code
 .claude/
 └── prompts/
     ├── project-management/    # Status tracking and updates
+    │   ├── status-check.md
+    │   ├── status-update.md
+    │   └── next-task.md
     ├── technical-debt/       # Debt management prompts
+    │   ├── debt-check.md
+    │   ├── debt-add.md
+    │   └── debt-resolve.md
     ├── development/          # Implementation prompts
+    │   ├── impl-plan.md
+    │   ├── impl-multi.md
+    │   ├── feature.md
+    │   ├── feature-provider.md
+    │   ├── bug.md
+    │   ├── test.md
+    │   └── doc-sync.md
     ├── knowledge-base/       # Knowledge base queries
-    └── workflows/            # Multi-step workflows
+    │   ├── knowledge-query.md
+    │   └── knowledge-add.md
+    ├── workflows/            # Multi-step workflows
+    │   └── common-workflows.md
+    ├── architecture/         # Design and schema decisions
+    │   ├── arch-decision.md
+    │   └── schema-update.md
+    └── infrastructure/       # Setup and deployment
+        ├── local-setup.md
+        └── deploy-prep.md
 ```
 
 ## How to Use These Prompts
@@ -38,22 +60,28 @@ This directory contains structured prompts for AI coding assistants (Claude Code
 1. **List Available Prompts**:
    ```bash
    python scripts/prompt.py list
-   # or
-   ./dev-cli prompt --list
+   
+   # List by category
+   python scripts/prompt.py list --category development
+   
+   # Export as JSON
+   python scripts/prompt.py export > prompts.json
    ```
 
 2. **View a Prompt**:
    ```bash
    python scripts/prompt.py show status-check
-   # or
-   ./dev-cli prompt status-check --show
+   
+   # Show with category
+   python scripts/prompt.py show impl-plan
    ```
 
 3. **Execute a Prompt**:
    ```bash
    python scripts/prompt.py exec status-check
-   # or
-   ./dev-cli prompt status-check
+   
+   # Note: Only works with prompts containing bash commands
+   # Interactive prompts require terminal input
    ```
 
 ## Prompt Categories
@@ -70,10 +98,12 @@ This directory contains structured prompts for AI coding assistants (Claude Code
 
 ### Development
 - `impl-plan` - Plan implementation approach
+- `impl-multi` - Multi-component implementation
 - `feature` - Implement new feature
 - `feature-provider` - Add provider integration
 - `bug` - Investigate and fix bugs
 - `test` - Add test coverage
+- `doc-sync` - Sync documentation
 
 ### Knowledge Base
 - `knowledge-query` - Query development patterns
@@ -81,6 +111,14 @@ This directory contains structured prompts for AI coding assistants (Claude Code
 
 ### Workflows
 - `common-workflows` - Multi-step development workflows
+
+### Architecture
+- `arch-decision` - Architecture decision template
+- `schema-update` - MongoDB schema updates
+
+### Infrastructure
+- `local-setup` - Local development setup
+- `deploy-prep` - Production deployment prep
 
 ## Prompt Format
 
