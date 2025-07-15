@@ -11,6 +11,7 @@ import asyncio
 from typing import Optional, List, Dict
 from datetime import datetime
 from dotenv import load_dotenv
+import subprocess
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -44,7 +45,16 @@ async def init_mongodb():
 
 @click.group()
 def cli():
-    """Development knowledge base CLI"""
+    """Development knowledge base CLI
+    
+    A unified tool for managing development knowledge, prompts, and project status.
+    
+    Key commands:
+      ask      - Query development patterns and knowledge
+      prompt   - Execute AI assistant prompts for workflows
+      status   - Check project implementation progress
+      suggest  - Get implementation recommendations
+    """
     # Load environment variables
     env_path = Path(__file__).parent.parent.parent / ".env"
     if env_path.exists():
@@ -298,6 +308,59 @@ def collections():
         
     except Exception as e:
         console.print(f"[red]Error accessing ChromaDB: {e}[/red]")
+
+
+@cli.command()
+@click.argument('action', default='list')
+@click.argument('prompt_name', required=False)
+@click.option('--category', '-c', help='Filter by category (for list action)')
+@click.option('--json', is_flag=True, help='Output in JSON format')
+@click.pass_context
+def prompt(ctx, action: str, prompt_name: Optional[str], category: Optional[str], json: bool):
+    """Manage and execute AI assistant prompts
+    
+    Actions:
+      list     - List available prompts
+      show     - Display prompt content
+      exec     - Execute a prompt
+      execute  - Execute a prompt (alias)
+      export   - Export prompts as JSON
+      workflow - Run a workflow prompt
+      help     - Show prompt system help
+    
+    Examples:
+      ./dev-cli prompt list
+      ./dev-cli prompt show status-check
+      ./dev-cli prompt exec status-check
+      ./dev-cli prompt workflow next-and-implement
+    """
+    # Get the path to prompt.py script
+    project_root = Path(__file__).parent.parent.parent
+    prompt_script = project_root / "scripts" / "prompt.py"
+    
+    if not prompt_script.exists():
+        console.print(f"[red]Error: prompt.py script not found at {prompt_script}[/red]")
+        return
+    
+    # Build command
+    cmd = [sys.executable, str(prompt_script), action]
+    
+    if prompt_name:
+        cmd.append(prompt_name)
+    
+    if category:
+        cmd.extend(['--category', category])
+    
+    if json:
+        cmd.append('--json')
+    
+    try:
+        # Run the prompt.py script and pass through stdin/stdout
+        result = subprocess.run(cmd, cwd=str(project_root))
+        sys.exit(result.returncode)
+    except Exception as e:
+        console.print(f"[red]Error executing prompt command: {e}[/red]")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
