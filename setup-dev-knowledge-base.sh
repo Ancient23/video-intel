@@ -10,11 +10,23 @@ echo "🚀 Setting up Video Intelligence Platform Development Knowledge Base"
 check_prerequisites() {
     echo "📋 Checking prerequisites..."
     
-    # Check Python
+    # Check Python (3.11+ required)
     if ! command -v python3 &> /dev/null; then
-        echo "❌ Python 3 is required but not installed."
+        echo "❌ Python 3.11+ is required but not installed."
         exit 1
     fi
+    
+    # Check Python version
+    PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+    PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d. -f1)
+    PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d. -f2)
+    
+    if [ "$PYTHON_MAJOR" -lt 3 ] || ([ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -lt 11 ]); then
+        echo "❌ Python 3.11+ is required but found Python $PYTHON_VERSION"
+        exit 1
+    fi
+    
+    echo "✅ Found Python $PYTHON_VERSION"
     
     # Check Docker
     if ! command -v docker &> /dev/null; then
@@ -69,20 +81,21 @@ setup_python() {
     # Create requirements files
     cat > requirements-dev.txt << 'EOF'
 # Development Knowledge Base Requirements
-langchain==0.1.0
-langchain-openai==0.0.5
+langchain==0.3.0
+langchain-openai==0.3.0
 chromadb==0.4.22
 beanie==1.25.0
 motor==3.3.2
 pymongo==4.6.1
 click==8.1.7
 rich==13.7.0
-PyPDF2==3.0.1
+pypdf==4.0.1
 python-frontmatter==1.0.1
 httpx==0.26.0
-pydantic==2.5.3
+pydantic==2.8.0
 structlog==24.1.0
 python-dotenv==1.0.1
+tiktoken==0.9.0
 EOF
 
     cat > requirements.txt << 'EOF'
@@ -92,9 +105,9 @@ celery==5.3.4
 redis==5.0.1
 motor==3.3.2
 pymongo==4.6.1
-langchain==0.1.0
-langchain-openai==0.0.5
-pydantic==2.5.3
+langchain==0.3.0
+langchain-openai==0.3.0
+pydantic==2.8.0
 httpx==0.26.0
 boto3==1.34.34
 structlog==24.1.0
@@ -114,16 +127,28 @@ EOF
 setup_mongodb() {
     echo "🍃 Setting up MongoDB..."
     
-    # Start MongoDB container
-    docker run -d \
-        --name video-intel-devdb \
-        -p 27017:27017 \
-        -v video-intel-mongodb:/data/db \
-        mongo:7
-    
-    # Wait for MongoDB to be ready
-    echo "Waiting for MongoDB to start..."
-    sleep 5
+    # Check if container already exists
+    if docker ps -a --format '{{.Names}}' | grep -q '^video-intel-devdb$'; then
+        echo "📦 MongoDB container already exists"
+        # Check if it's running
+        if ! docker ps --format '{{.Names}}' | grep -q '^video-intel-devdb$'; then
+            echo "🔄 Starting existing MongoDB container..."
+            docker start video-intel-devdb
+        else
+            echo "✅ MongoDB already running"
+        fi
+    else
+        # Start MongoDB container
+        docker run -d \
+            --name video-intel-devdb \
+            -p 27017:27017 \
+            -v video-intel-mongodb:/data/db \
+            mongo:7
+        
+        # Wait for MongoDB to be ready
+        echo "Waiting for MongoDB to start..."
+        sleep 5
+    fi
     
     echo "✅ MongoDB running on port 27017"
 }
