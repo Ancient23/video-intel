@@ -55,9 +55,19 @@ PROMPT_METADATA = {
         "description": "Plan implementation approach",
         "category": "development"
     },
+    "impl-multi": {
+        "file": "development/impl-multi.md",
+        "description": "Multi-component implementation",
+        "category": "development"
+    },
     "feature": {
         "file": "development/feature.md",
         "description": "Implement new feature",
+        "category": "development"
+    },
+    "feature-provider": {
+        "file": "development/feature-provider.md",
+        "description": "Add provider integration",
         "category": "development"
     },
     "bug": {
@@ -68,6 +78,11 @@ PROMPT_METADATA = {
     "test": {
         "file": "development/test.md",
         "description": "Add test coverage",
+        "category": "development"
+    },
+    "doc-sync": {
+        "file": "development/doc-sync.md",
+        "description": "Sync documentation",
         "category": "development"
     },
     
@@ -88,6 +103,30 @@ PROMPT_METADATA = {
         "file": "workflows/common-workflows.md",
         "description": "Multi-step development workflows",
         "category": "workflows"
+    },
+    
+    # Architecture
+    "arch-decision": {
+        "file": "architecture/arch-decision.md",
+        "description": "Architecture decision template",
+        "category": "architecture"
+    },
+    "schema-update": {
+        "file": "architecture/schema-update.md",
+        "description": "MongoDB schema updates",
+        "category": "architecture"
+    },
+    
+    # Infrastructure
+    "local-setup": {
+        "file": "infrastructure/local-setup.md",
+        "description": "Local development setup",
+        "category": "infrastructure"
+    },
+    "deploy-prep": {
+        "file": "infrastructure/deploy-prep.md",
+        "description": "Production deployment prep",
+        "category": "infrastructure"
     }
 }
 
