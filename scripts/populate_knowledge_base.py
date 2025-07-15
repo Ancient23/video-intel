@@ -5,7 +5,7 @@ import json
 import os
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import motor.motor_asyncio
 from beanie import init_beanie, Document
 from pydantic import BaseModel, Field
@@ -48,7 +48,7 @@ class ExtractionReport(Document):
     old_repo_path: str
     pdf_dir: str
     started_at: datetime
-    completed_at: datetime = Field(default=None)
+    completed_at: Optional[datetime] = Field(default=None)
     status: str = Field(default="in_progress")  # in_progress, completed, failed
     statistics: Dict[str, Any] = Field(default_factory=dict)
     errors: list[str] = Field(default_factory=list)
