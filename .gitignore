@@ -215,7 +215,7 @@ dev-knowledge-base/knowledge/chromadb/
 dev-knowledge-base/knowledge/embeddings/
 dev-knowledge-base/knowledge/graphs/
 dev-knowledge-base/knowledge/summaries/
-dev-knowledge-base/docs/imported/
+# dev-knowledge-base/docs/imported/
 
 # MongoDB data
 mongo-data/
@@ -251,7 +251,7 @@ docker/volumes/
 *.chromadb
 
 # PDFs (optional - uncomment if not using Git LFS)
-# dev-knowledge-base/docs/pdfs/*.pdf
+dev-knowledge-base/docs/pdfs/*.pdf
 
 # Temporary processing files
 tmp/
