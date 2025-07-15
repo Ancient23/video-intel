@@ -51,7 +51,7 @@ Key patterns to reference from the old repository:
 
 ## Primary Documentation
 
-1. **Product Requirements Document**: `docs/new/VIDEO_INTELLIGENCE_PRD.md`
+1. **Product Requirements Document**: `docs/new/video-intelligence-prd.md`
    - Complete architecture specification
    - MongoDB schemas
    - API design
@@ -222,7 +222,7 @@ cd services/backend && python -m api.generate_docs
 
 ## When in Doubt
 
-1. Check the PRD: `docs/new/VIDEO_INTELLIGENCE_PRD.md`
+1. Check the PRD: `docs/new/video-intelligence-prd.md`
 2. Query knowledge base: `./dev-cli ask "[question]"`
 3. Reference old code: Look in `/Users/filip/Documents/Source/VideoCommentator-MonoRepo` 
 4. Follow NVIDIA blueprints: Check PDFs in knowledge base

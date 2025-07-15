@@ -70,6 +70,6 @@ In conclusion, when integrating MongoDB with the new Video Intelligence architec
 
 
 ## Related Documentation
-- Video Intelligence PRD: docs/new/VIDEO_INTELLIGENCE_PRD.md
+- Video Intelligence PRD: docs/new/video-intelligence-prd.md
 - Old VideoCommentator: /Users/filip/Documents/Source/VideoCommentator-MonoRepo
 - NVIDIA Blueprints: dev-knowledge-base/docs/pdfs/

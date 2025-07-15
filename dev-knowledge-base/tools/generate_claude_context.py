@@ -74,7 +74,7 @@ This context provides guidance for implementing {topic} based on patterns from t
 {mongodb_context.get('performance_tips', 'Follow general performance best practices.')}
 
 ## Related Documentation
-- Video Intelligence PRD: docs/new/VIDEO_INTELLIGENCE_PRD.md
+- Video Intelligence PRD: docs/new/video-intelligence-prd.md
 - Old VideoCommentator: /Users/filip/Documents/Source/VideoCommentator-MonoRepo
 - NVIDIA Blueprints: dev-knowledge-base/docs/pdfs/
 """
