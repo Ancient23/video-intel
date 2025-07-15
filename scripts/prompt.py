@@ -95,6 +95,11 @@ PROMPT_METADATA = {
         "description": "Sync documentation",
         "category": "development"
     },
+    "sync-dev-cli": {
+        "file": "development/sync-dev-cli.md",
+        "description": "Sync dev-cli with project changes",
+        "category": "development"
+    },
     
     # Knowledge Base
     "knowledge-query": {
