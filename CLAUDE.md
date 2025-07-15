@@ -231,7 +231,8 @@ Remember: This project demonstrates its own capabilities - we're using RAG to bu
 
 ## Using Prompt Templates
 
-Always use the templates in PROMPTS.md for consistency. Common workflows:
+Always use the templates in PROMPTS.md for consistency and ensure Python environment (source venv/bin/activate) is running at root of the project.
+Common workflows:
 
 ### Starting a Session
 ```

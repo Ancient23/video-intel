@@ -60,6 +60,11 @@ PROMPT_METADATA = {
         "description": "Multi-component implementation",
         "category": "development"
     },
+    "implement-next-task": {
+        "file": "development/implement-next-task.md",
+        "description": "Implement task from next-task output",
+        "category": "development"
+    },
     "feature": {
         "file": "development/feature.md",
         "description": "Implement new feature",
@@ -102,6 +107,11 @@ PROMPT_METADATA = {
     "common-workflows": {
         "file": "workflows/common-workflows.md",
         "description": "Multi-step development workflows",
+        "category": "workflows"
+    },
+    "next-and-implement": {
+        "file": "workflows/next-and-implement.md",
+        "description": "Next task with approval before implementation",
         "category": "workflows"
     },
     
@@ -280,6 +290,46 @@ class PromptLoader:
             }
         
         return json.dumps(export_data, indent=2)
+    
+    def workflow_next_and_implement(self) -> None:
+        """Execute the next-and-implement workflow"""
+        print("🔄 Starting Next Task and Implementation Workflow\n")
+        
+        # Step 1: Run next-task
+        print("📋 Step 1: Analyzing next task from PRD...")
+        print("-" * 50)
+        self.execute_prompt("next-task")
+        
+        # Step 2: Ask for approval
+        print("\n" + "="*70)
+        print("🤔 DECISION POINT")
+        print("="*70)
+        print("\nThe plan above has been generated from the PRD and current project status.")
+        print("\nWould you like to:")
+        print("  a) Proceed with implementation as planned")
+        print("  b) Modify the plan (specify changes)")
+        print("  c) Choose a different task")
+        print("  d) Skip for now")
+        
+        response = input("\nYour choice (a/b/c/d): ").strip().lower()
+        
+        if response == 'a':
+            print("\n✅ Approved! Proceeding with implementation...\n")
+            print("📋 Step 3: Executing implementation with technical debt tracking...")
+            print("-" * 50)
+            self.execute_prompt("implement-next-task")
+        elif response == 'b':
+            print("\n📝 Please specify your modifications:")
+            modifications = input("> ")
+            print(f"\n💡 Noted: {modifications}")
+            print("Please manually update the plan and run 'python scripts/prompt.py exec implement-next-task' when ready.")
+        elif response == 'c':
+            print("\n🔄 Please specify which task you'd like to work on instead:")
+            task = input("> ")
+            print(f"\n💡 Switching to: {task}")
+            print("Please use the appropriate prompt for your chosen task.")
+        else:
+            print("\n⏸️  Workflow paused. Run again when ready.")
 
 
 def main():
@@ -293,6 +343,7 @@ Examples:
   python scripts/prompt.py list --category dev     # List development prompts
   python scripts/prompt.py show status-check       # Display prompt
   python scripts/prompt.py exec status-check       # Execute prompt
+  python scripts/prompt.py workflow next-and-implement  # Run workflow
   python scripts/prompt.py help                    # Show this help
   python scripts/prompt.py export                  # Export as JSON
         """
@@ -300,7 +351,7 @@ Examples:
     
     parser.add_argument(
         'action',
-        choices=['list', 'show', 'exec', 'execute', 'help', 'export'],
+        choices=['list', 'show', 'exec', 'execute', 'help', 'export', 'workflow'],
         help='Action to perform'
     )
     
@@ -365,6 +416,19 @@ Examples:
     
     elif args.action == 'export':
         print(loader.export_json())
+    
+    elif args.action == 'workflow':
+        if not args.prompt_name:
+            print("❌ Please specify a workflow name")
+            print("💡 Available workflows: next-and-implement")
+            sys.exit(1)
+        
+        if args.prompt_name == 'next-and-implement':
+            loader.workflow_next_and_implement()
+        else:
+            print(f"❌ Unknown workflow: {args.prompt_name}")
+            print("💡 Available workflows: next-and-implement")
+            sys.exit(1)
 
 
 if __name__ == "__main__":
