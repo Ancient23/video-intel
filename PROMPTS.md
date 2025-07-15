@@ -35,6 +35,9 @@ Use the Implementation Plan Step Execution Template from PROMPTS.md for implemen
 - **knowledge-query** → Development Knowledge Base Query Template
 - **knowledge-add** → Add Knowledge to Dev Database Template
 - **next-task** → Get Next Implementation Task Template
+- **debt-check** → Technical Debt Status Template
+- **debt-add** → Add Technical Debt Item Template
+- **debt-resolve** → Resolve Technical Debt Template
 
 #### Example Usage:
 ```
@@ -105,17 +108,26 @@ Steps:
    - Add completed task to list
    - Remove from current tasks
    - Add any new notes or issues
-2. Query knowledge base for related items:
+2. Check for technical debt:
+   - Review code for TODO/FIXME comments
+   - Identify incomplete implementations
+   - Note any hardcoded values or workarounds
+   - Add items to technical debt tracking:
+     ```python
+     python scripts/init_technical_debt.py
+     ```
+3. Query knowledge base for related items:
    ```bash
    ./dev-cli ask "Any issues related to [component]?"
    ```
-3. Update knowledge base if new patterns discovered:
+4. Update knowledge base if new patterns discovered:
    - Create markdown file in dev-knowledge-base/docs/
    - Document pattern/lesson learned
    - Run knowledge base ingestion
-4. Report:
+5. Report:
    - What was updated
    - Current phase progress
+   - Any technical debt created
    - Next recommended tasks
 ```
 
@@ -140,6 +152,120 @@ Analysis:
    - Estimated effort
    - Required knowledge/patterns
    - Success criteria
+```
+
+---
+
+## Technical Debt Management
+
+### Technical Debt Status Template
+```
+Show me the current technical debt status and high priority items.
+
+Steps:
+1. Query technical debt collection:
+   ```python
+   python scripts/init_technical_debt.py
+   ```
+2. Analyze report showing:
+   - Total debt items and open items
+   - Critical and high priority items
+   - Estimated effort hours remaining
+   - Items by category and severity
+3. For critical/high items:
+   - Show file locations and line numbers
+   - Explain impact on system
+   - Suggest resolution approach
+4. Check if any debt blocks current tasks:
+   - Cross-reference with project status
+   - Identify dependencies
+5. Recommend:
+   - Which debt to address first
+   - Quick wins (< 2 hours)
+   - Items that unblock features
+```
+
+### Add Technical Debt Item Template
+```
+Add a new technical debt item for [issue/incomplete implementation].
+
+Issue: [description]
+Location: [file path and line numbers if applicable]
+Severity: [critical/high/medium/low]
+Category: [security/performance/incomplete/hardcoded/missing_integration/testing/documentation/error_handling/configuration/monitoring]
+
+Steps:
+1. Create debt item:
+   ```python
+   from backend.models import TechnicalDebt, TechnicalDebtItem, DebtSeverity, DebtCategory
+   
+   item = TechnicalDebtItem(
+       id="[CATEGORY-NNN]",
+       title="[Short descriptive title]",
+       description="[Detailed description]",
+       file_path="[path/to/file.py]",
+       line_numbers=[line1, line2],
+       category=DebtCategory.[CATEGORY],
+       severity=DebtSeverity.[SEVERITY],
+       estimated_effort_hours=[float],
+       tags=["tag1", "tag2"]
+   )
+   ```
+2. Add to technical debt document:
+   - Specify component/service area
+   - Update statistics
+3. If discovered during implementation:
+   - Add TODO/FIXME comment in code
+   - Reference debt item ID
+   ```python
+   # TODO: [DEBT-ID] - Brief description
+   # See technical debt tracking for full details
+   ```
+4. Update project status if this blocks features
+5. Report debt item details and impact
+```
+
+### Resolve Technical Debt Template
+```
+Resolve technical debt item [DEBT-ID].
+
+Debt ID: [ID from technical debt tracking]
+
+Pre-resolution:
+1. Query debt details:
+   - Get full description and requirements
+   - Check file locations
+   - Review estimated effort
+2. Check for related items:
+   - Other debt in same component
+   - Dependencies on this resolution
+3. If from VideoCommentator:
+   ```bash
+   ./dev-cli ask "VideoCommentator [component] implementation"
+   ```
+   - Check if we can reuse existing code
+
+Resolution:
+1. Implement fix following patterns:
+   - Use knowledge base guidance
+   - Follow PRD specifications
+   - Apply VideoCommentator patterns
+2. Remove TODO/FIXME comments
+3. Test thoroughly:
+   - Unit tests for the fix
+   - Integration tests if applicable
+   - Verify no regressions
+4. Update technical debt:
+   - Mark item as resolved
+   - Add resolution notes
+   - Update statistics
+5. If pattern discovered:
+   - Add to knowledge base
+   - Document for future
+6. Report:
+   - What was fixed
+   - Any new debt discovered
+   - Impact on system
 ```
 
 ---

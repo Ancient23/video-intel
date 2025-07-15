@@ -5,6 +5,7 @@ from .video import Video, VideoStatus
 from .scene import Scene, Shot
 from .knowledge_graph import KnowledgeGraphNode, NodeType, RelationshipType
 from .processing_job import ProcessingJob, JobStatus, JobType
+from .technical_debt import TechnicalDebt, TechnicalDebtItem, DebtSeverity, DebtCategory, DebtStatus
 
 # List of all document models for Beanie initialization
 document_models = [
@@ -13,6 +14,7 @@ document_models = [
     Scene,
     KnowledgeGraphNode,
     ProcessingJob,
+    TechnicalDebt,
 ]
 
 __all__ = [
@@ -38,6 +40,13 @@ __all__ = [
     "ProcessingJob",
     "JobStatus",
     "JobType",
+    
+    # Technical Debt
+    "TechnicalDebt",
+    "TechnicalDebtItem",
+    "DebtSeverity",
+    "DebtCategory",
+    "DebtStatus",
     
     # Initialization
     "document_models",
