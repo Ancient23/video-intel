@@ -8,8 +8,8 @@ import tempfile
 from unittest.mock import patch, MagicMock, AsyncMock, call
 from botocore.exceptions import ClientError
 
-from backend.services.analysis.providers.nvidia_vila import NvidiaVilaAnalyzer
-from backend.schemas.analysis import ChunkInfo, AnalysisConfig, AnalysisGoal
+from services.analysis.providers.nvidia_vila import NvidiaVilaAnalyzer
+from schemas.analysis import ChunkInfo, AnalysisConfig, AnalysisGoal
 
 
 @pytest.fixture
@@ -66,9 +66,9 @@ class TestNvidiaVilaS3Integration:
     async def test_extract_frames_with_s3_download(self, vila_analyzer, sample_chunk_s3):
         """Test frame extraction with S3 download."""
         # Mock dependencies
-        with patch('backend.services.analysis.providers.nvidia_vila.download_from_s3') as mock_download, \
-             patch('backend.services.analysis.providers.nvidia_vila.is_s3_uri') as mock_is_s3, \
-             patch('backend.services.analysis.providers.nvidia_vila.ffmpeg') as mock_ffmpeg, \
+        with patch('services.analysis.providers.nvidia_vila.download_from_s3') as mock_download, \
+             patch('services.analysis.providers.nvidia_vila.is_s3_uri') as mock_is_s3, \
+             patch('services.analysis.providers.nvidia_vila.ffmpeg') as mock_ffmpeg, \
              patch('os.unlink') as mock_unlink:
             
             # Setup mocks
@@ -98,7 +98,7 @@ class TestNvidiaVilaS3Integration:
     @pytest.mark.asyncio
     async def test_extract_frames_with_local_path(self, vila_analyzer, sample_chunk_local):
         """Test frame extraction with local path (no S3 download)."""
-        with patch('backend.services.analysis.providers.nvidia_vila.ffmpeg') as mock_ffmpeg:
+        with patch('services.analysis.providers.nvidia_vila.ffmpeg') as mock_ffmpeg:
             # Mock ffmpeg
             mock_frame_data = b"fake_jpeg_data"
             mock_ffmpeg_stream = MagicMock()
@@ -116,8 +116,8 @@ class TestNvidiaVilaS3Integration:
     @pytest.mark.asyncio
     async def test_s3_download_access_denied(self, vila_analyzer, sample_chunk_s3):
         """Test handling of S3 access denied error."""
-        with patch('backend.services.analysis.providers.nvidia_vila.download_from_s3') as mock_download, \
-             patch('backend.services.analysis.providers.nvidia_vila.is_s3_uri') as mock_is_s3:
+        with patch('services.analysis.providers.nvidia_vila.download_from_s3') as mock_download, \
+             patch('services.analysis.providers.nvidia_vila.is_s3_uri') as mock_is_s3:
             
             mock_is_s3.return_value = True
             # Simulate S3 access denied
@@ -133,8 +133,8 @@ class TestNvidiaVilaS3Integration:
     @pytest.mark.asyncio
     async def test_s3_download_not_found(self, vila_analyzer, sample_chunk_s3):
         """Test handling of S3 object not found error."""
-        with patch('backend.services.analysis.providers.nvidia_vila.download_from_s3') as mock_download, \
-             patch('backend.services.analysis.providers.nvidia_vila.is_s3_uri') as mock_is_s3:
+        with patch('services.analysis.providers.nvidia_vila.download_from_s3') as mock_download, \
+             patch('services.analysis.providers.nvidia_vila.is_s3_uri') as mock_is_s3:
             
             mock_is_s3.return_value = True
             # Simulate S3 not found
@@ -150,9 +150,9 @@ class TestNvidiaVilaS3Integration:
     @pytest.mark.asyncio
     async def test_cleanup_on_exception(self, vila_analyzer, sample_chunk_s3):
         """Test that temporary file is cleaned up even on exception."""
-        with patch('backend.services.analysis.providers.nvidia_vila.download_from_s3') as mock_download, \
-             patch('backend.services.analysis.providers.nvidia_vila.is_s3_uri') as mock_is_s3, \
-             patch('backend.services.analysis.providers.nvidia_vila.ffmpeg') as mock_ffmpeg, \
+        with patch('services.analysis.providers.nvidia_vila.download_from_s3') as mock_download, \
+             patch('services.analysis.providers.nvidia_vila.is_s3_uri') as mock_is_s3, \
+             patch('services.analysis.providers.nvidia_vila.ffmpeg') as mock_ffmpeg, \
              patch('os.unlink') as mock_unlink, \
              patch('os.path.exists') as mock_exists:
             
@@ -184,7 +184,7 @@ class TestNvidiaVilaS3Integration:
             local_path=None
         )
         
-        with patch('backend.services.analysis.providers.nvidia_vila.is_s3_uri') as mock_is_s3:
+        with patch('services.analysis.providers.nvidia_vila.is_s3_uri') as mock_is_s3:
             mock_is_s3.return_value = False
             
             with pytest.raises(ValueError, match="Invalid S3 URI"):
@@ -210,9 +210,9 @@ class TestNvidiaVilaS3Integration:
     @pytest.mark.asyncio
     async def test_full_analysis_with_s3(self, vila_analyzer, sample_chunk_s3, analysis_config):
         """Test full analysis flow with S3 download."""
-        with patch('backend.services.analysis.providers.nvidia_vila.download_from_s3') as mock_download, \
-             patch('backend.services.analysis.providers.nvidia_vila.is_s3_uri') as mock_is_s3, \
-             patch('backend.services.analysis.providers.nvidia_vila.ffmpeg') as mock_ffmpeg, \
+        with patch('services.analysis.providers.nvidia_vila.download_from_s3') as mock_download, \
+             patch('services.analysis.providers.nvidia_vila.is_s3_uri') as mock_is_s3, \
+             patch('services.analysis.providers.nvidia_vila.ffmpeg') as mock_ffmpeg, \
              patch('os.unlink') as mock_unlink, \
              patch.object(vila_analyzer, '_call_vila_api') as mock_api:
             

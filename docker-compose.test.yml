@@ -75,13 +75,7 @@ services:
         echo 'Waiting for services to be ready...' &&
         sleep 5 &&
         echo 'Running tests with coverage...' &&
-        python -m pytest tests/ 
-          --cov=. 
-          --cov-report=html:/test-results/htmlcov 
-          --cov-report=xml:/test-results/coverage.xml 
-          --cov-report=term 
-          --junit-xml=/test-results/junit.xml 
-          -v
+        python -m pytest tests/ --cov=. --cov-report=html:/test-results/htmlcov --cov-report=xml:/test-results/coverage.xml --cov-report=term --junit-xml=/test-results/junit.xml -v
       "
     networks:
       - test-network

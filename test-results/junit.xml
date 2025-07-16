@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="5" failures="0" skipped="0" tests="5" time="1.235" timestamp="2025-07-16T21:20:46.313800" hostname="f848d444e274"><testcase classname="tests.integration.test_api_celery_integration.TestAPICeleryIntegration" name="test_start_video_analysis_triggers_celery_task" time="0.001"><error message="failed on setup with &quot;file /services/backend/tests/integration/test_api_celery_integration.py, line 24&#10;      async def test_start_video_analysis_triggers_celery_task(&#10;          self,&#10;          async_client: AsyncClient,&#10;          mock_current_user,&#10;          sample_video_data&#10;      ):&#10;          &quot;&quot;&quot;Test that API endpoint properly triggers Celery task.&quot;&quot;&quot;&#10;          # Mock Celery task&#10;          with patch('backend.workers.video_processing.process_video_full_pipeline.apply_async') as mock_task:&#10;              mock_result = MagicMock(spec=AsyncResult)&#10;              mock_result.id = &quot;test-task-123&quot;&#10;              mock_task.return_value = mock_result&#10;&#10;              # Make API request&#10;              response = await async_client.post(&#10;                  &quot;/api/v1/video-analysis/analyze&quot;,&#10;                  json={&#10;                      &quot;video_url&quot;: &quot;s3://test-bucket/test-video.mp4&quot;,&#10;                      &quot;user_prompt&quot;: &quot;Analyze this video for scene changes and objects&quot;,&#10;                      &quot;video_type&quot;: &quot;general&quot;,&#10;                      &quot;chunk_duration&quot;: 30.0,&#10;                      &quot;cost_limit&quot;: 10.0&#10;                  }&#10;              )&#10;&#10;              assert response.status_code == 202&#10;              data = response.json()&#10;&#10;              # Verify response&#10;              assert &quot;job_id&quot; in data&#10;              assert &quot;video_id&quot; in data&#10;              assert data[&quot;status&quot;] == &quot;pending&quot;&#10;              assert data[&quot;estimated_cost&quot;] &gt; 0&#10;&#10;              # Verify Celery task was called&#10;              mock_task.assert_called_once()&#10;              args, kwargs = mock_task.call_args&#10;&#10;              # Check task arguments&#10;              assert len(args[0]) == 3  # job_id, video_id, config&#10;              assert args[0][0] == data[&quot;job_id&quot;]&#10;              assert args[0][1] == data[&quot;video_id&quot;]&#10;              assert isinstance(args[0][2], dict)  # analysis_config&#10;&#10;              # Check task options&#10;              assert kwargs[&quot;queue&quot;] == &quot;orchestration&quot;&#10;              assert kwargs[&quot;task_id&quot;] == f&quot;{data['job_id']}-pipeline&quot;&#10;              assert kwargs[&quot;retry&quot;] is True&#10;E       fixture 'async_client' not found&#10;&gt;       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, class_mocker, cov, doctest_namespace, event_loop, mock_beanie_document, mock_boto3_client, mock_celery_task, mock_current_user, mock_env_vars, mock_openai, mock_redis_client, mock_s3_service, mock_structlog, mocker, module_mocker, monkeypatch, no_cover, package_mocker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_video, sample_video_data, session_mocker, test_client, test_db, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;/services/backend/tests/integration/test_api_celery_integration.py:24&quot;">file /services/backend/tests/integration/test_api_celery_integration.py, line 24
+      async def test_start_video_analysis_triggers_celery_task(
+          self,
+          async_client: AsyncClient,
+          mock_current_user,
+          sample_video_data
+      ):
+          """Test that API endpoint properly triggers Celery task."""
+          # Mock Celery task
+          with patch('backend.workers.video_processing.process_video_full_pipeline.apply_async') as mock_task:
+              mock_result = MagicMock(spec=AsyncResult)
+              mock_result.id = "test-task-123"
+              mock_task.return_value = mock_result
+
+              # Make API request
+              response = await async_client.post(
+                  "/api/v1/video-analysis/analyze",
+                  json={
+                      "video_url": "s3://test-bucket/test-video.mp4",
+                      "user_prompt": "Analyze this video for scene changes and objects",
+                      "video_type": "general",
+                      "chunk_duration": 30.0,
+                      "cost_limit": 10.0
+                  }
+              )
+
+              assert response.status_code == 202
+              data = response.json()
+
+              # Verify response
+              assert "job_id" in data
+              assert "video_id" in data
+              assert data["status"] == "pending"
+              assert data["estimated_cost"] &gt; 0
+
+              # Verify Celery task was called
+              mock_task.assert_called_once()
+              args, kwargs = mock_task.call_args
+
+              # Check task arguments
+              assert len(args[0]) == 3  # job_id, video_id, config
+              assert args[0][0] == data["job_id"]
+              assert args[0][1] == data["video_id"]
+              assert isinstance(args[0][2], dict)  # analysis_config
+
+              # Check task options
+              assert kwargs["queue"] == "orchestration"
+              assert kwargs["task_id"] == f"{data['job_id']}-pipeline"
+              assert kwargs["retry"] is True
+E       fixture 'async_client' not found
+&gt;       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, class_mocker, cov, doctest_namespace, event_loop, mock_beanie_document, mock_boto3_client, mock_celery_task, mock_current_user, mock_env_vars, mock_openai, mock_redis_client, mock_s3_service, mock_structlog, mocker, module_mocker, monkeypatch, no_cover, package_mocker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_video, sample_video_data, session_mocker, test_client, test_db, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+/services/backend/tests/integration/test_api_celery_integration.py:24</error></testcase><testcase classname="tests.integration.test_api_celery_integration.TestAPICeleryIntegration" name="test_job_status_reflects_celery_progress" time="0.000"><error message="failed on setup with &quot;file /services/backend/tests/integration/test_api_celery_integration.py, line 73&#10;      async def test_job_status_reflects_celery_progress(&#10;          self,&#10;          async_client: AsyncClient,&#10;          mock_current_user&#10;      ):&#10;          &quot;&quot;&quot;Test that job status endpoint reflects Celery task progress.&quot;&quot;&quot;&#10;          # Create a job&#10;          job = ProcessingJob(&#10;              job_type=JobType.FULL_PIPELINE,&#10;              video_id=&quot;507f1f77bcf86cd799439011&quot;,&#10;              provider=&quot;multi-provider&quot;,&#10;              status=JobStatus.RUNNING,&#10;              progress=50,&#10;              current_step=&quot;Analyzing with AWS Rekognition&quot;,&#10;              metadata={&quot;celery_task_id&quot;: &quot;test-task-456&quot;}&#10;          )&#10;          await job.save()&#10;&#10;          # Get job status&#10;          response = await async_client.get(f&quot;/api/v1/video-analysis/jobs/{job.id}&quot;)&#10;&#10;          assert response.status_code == 200&#10;          data = response.json()&#10;&#10;          assert data[&quot;job_id&quot;] == str(job.id)&#10;          assert data[&quot;status&quot;] == &quot;running&quot;&#10;          assert data[&quot;progress&quot;] == 50&#10;          assert data[&quot;current_step&quot;] == &quot;Analyzing with AWS Rekognition&quot;&#10;E       fixture 'async_client' not found&#10;&gt;       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, class_mocker, cov, doctest_namespace, event_loop, mock_beanie_document, mock_boto3_client, mock_celery_task, mock_current_user, mock_env_vars, mock_openai, mock_redis_client, mock_s3_service, mock_structlog, mocker, module_mocker, monkeypatch, no_cover, package_mocker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_video, sample_video_data, session_mocker, test_client, test_db, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;/services/backend/tests/integration/test_api_celery_integration.py:73&quot;">file /services/backend/tests/integration/test_api_celery_integration.py, line 73
+      async def test_job_status_reflects_celery_progress(
+          self,
+          async_client: AsyncClient,
+          mock_current_user
+      ):
+          """Test that job status endpoint reflects Celery task progress."""
+          # Create a job
+          job = ProcessingJob(
+              job_type=JobType.FULL_PIPELINE,
+              video_id="507f1f77bcf86cd799439011",
+              provider="multi-provider",
+              status=JobStatus.RUNNING,
+              progress=50,
+              current_step="Analyzing with AWS Rekognition",
+              metadata={"celery_task_id": "test-task-456"}
+          )
+          await job.save()
+
+          # Get job status
+          response = await async_client.get(f"/api/v1/video-analysis/jobs/{job.id}")
+
+          assert response.status_code == 200
+          data = response.json()
+
+          assert data["job_id"] == str(job.id)
+          assert data["status"] == "running"
+          assert data["progress"] == 50
+          assert data["current_step"] == "Analyzing with AWS Rekognition"
+E       fixture 'async_client' not found
+&gt;       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, class_mocker, cov, doctest_namespace, event_loop, mock_beanie_document, mock_boto3_client, mock_celery_task, mock_current_user, mock_env_vars, mock_openai, mock_redis_client, mock_s3_service, mock_structlog, mocker, module_mocker, monkeypatch, no_cover, package_mocker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_video, sample_video_data, session_mocker, test_client, test_db, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+/services/backend/tests/integration/test_api_celery_integration.py:73</error></testcase><testcase classname="tests.integration.test_api_celery_integration.TestAPICeleryIntegration" name="test_celery_task_updates_job_progress" time="0.000"><error message="failed on setup with &quot;file /services/backend/tests/integration/test_api_celery_integration.py, line 102&#10;      async def test_celery_task_updates_job_progress(&#10;          self,&#10;          celery_app,&#10;          celery_worker,&#10;          mongodb_client&#10;      ):&#10;          &quot;&quot;&quot;Test that Celery task properly updates job progress in MongoDB.&quot;&quot;&quot;&#10;          from backend.workers.video_processing import update_job_progress&#10;&#10;          # Create test job&#10;          job = ProcessingJob(&#10;              job_type=JobType.FULL_PIPELINE,&#10;              video_id=&quot;507f1f77bcf86cd799439011&quot;,&#10;              provider=&quot;multi-provider&quot;,&#10;              status=JobStatus.RUNNING,&#10;              progress=0&#10;          )&#10;          await job.save()&#10;&#10;          # Create analysis job&#10;          analysis_job = VideoAnalysisJob(&#10;              processing_job_id=str(job.id),&#10;              video_id=job.video_id,&#10;              user_prompt=&quot;Test analysis&quot;,&#10;              status=AnalysisStatus.PROCESSING,&#10;              progress=0&#10;          )&#10;          await analysis_job.save()&#10;&#10;          # Execute task&#10;          result = update_job_progress.apply_async(&#10;              args=[str(job.id), 75, &quot;Merging results&quot;, {&quot;stage&quot;: &quot;final&quot;}]&#10;          )&#10;&#10;          # Wait for task completion&#10;          task_result = result.get(timeout=10)&#10;&#10;          # Verify updates&#10;          updated_job = await ProcessingJob.get(job.id)&#10;          assert updated_job.progress == 75&#10;          assert updated_job.current_step == &quot;Merging results&quot;&#10;          assert updated_job.metadata[&quot;stage&quot;] == &quot;final&quot;&#10;&#10;          updated_analysis = await VideoAnalysisJob.get(analysis_job.id)&#10;          assert updated_analysis.progress == 75&#10;          assert updated_analysis.current_stage == &quot;Merging results&quot;&#10;E       fixture 'celery_app' not found&#10;&gt;       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, class_mocker, cov, doctest_namespace, event_loop, mock_beanie_document, mock_boto3_client, mock_celery_task, mock_current_user, mock_env_vars, mock_openai, mock_redis_client, mock_s3_service, mock_structlog, mocker, module_mocker, monkeypatch, no_cover, package_mocker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_video, sample_video_data, session_mocker, test_client, test_db, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;/services/backend/tests/integration/test_api_celery_integration.py:102&quot;">file /services/backend/tests/integration/test_api_celery_integration.py, line 102
+      async def test_celery_task_updates_job_progress(
+          self,
+          celery_app,
+          celery_worker,
+          mongodb_client
+      ):
+          """Test that Celery task properly updates job progress in MongoDB."""
+          from backend.workers.video_processing import update_job_progress
+
+          # Create test job
+          job = ProcessingJob(
+              job_type=JobType.FULL_PIPELINE,
+              video_id="507f1f77bcf86cd799439011",
+              provider="multi-provider",
+              status=JobStatus.RUNNING,
+              progress=0
+          )
+          await job.save()
+
+          # Create analysis job
+          analysis_job = VideoAnalysisJob(
+              processing_job_id=str(job.id),
+              video_id=job.video_id,
+              user_prompt="Test analysis",
+              status=AnalysisStatus.PROCESSING,
+              progress=0
+          )
+          await analysis_job.save()
+
+          # Execute task
+          result = update_job_progress.apply_async(
+              args=[str(job.id), 75, "Merging results", {"stage": "final"}]
+          )
+
+          # Wait for task completion
+          task_result = result.get(timeout=10)
+
+          # Verify updates
+          updated_job = await ProcessingJob.get(job.id)
+          assert updated_job.progress == 75
+          assert updated_job.current_step == "Merging results"
+          assert updated_job.metadata["stage"] == "final"
+
+          updated_analysis = await VideoAnalysisJob.get(analysis_job.id)
+          assert updated_analysis.progress == 75
+          assert updated_analysis.current_stage == "Merging results"
+E       fixture 'celery_app' not found
+&gt;       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, class_mocker, cov, doctest_namespace, event_loop, mock_beanie_document, mock_boto3_client, mock_celery_task, mock_current_user, mock_env_vars, mock_openai, mock_redis_client, mock_s3_service, mock_structlog, mocker, module_mocker, monkeypatch, no_cover, package_mocker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_video, sample_video_data, session_mocker, test_client, test_db, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+/services/backend/tests/integration/test_api_celery_integration.py:102</error></testcase><testcase classname="tests.integration.test_api_celery_integration.TestAPICeleryIntegration" name="test_full_pipeline_workflow" time="0.000"><error message="failed on setup with &quot;file /services/backend/tests/integration/test_api_celery_integration.py, line 149&#10;      async def test_full_pipeline_workflow(&#10;          self,&#10;          async_client: AsyncClient,&#10;          mock_current_user,&#10;          celery_app,&#10;          celery_worker&#10;      ):&#10;          &quot;&quot;&quot;Test complete workflow from API to task completion.&quot;&quot;&quot;&#10;          # Mock provider analysis tasks&#10;          with patch('backend.workers.video_analysis_tasks.analyze_with_rekognition') as mock_aws, \&#10;               patch('backend.workers.video_analysis_tasks.validate_and_extract_metadata') as mock_validate, \&#10;               patch('backend.workers.ingestion_tasks.chunk_video') as mock_chunk:&#10;&#10;              # Setup mock returns&#10;              mock_validate.return_value = {&quot;duration&quot;: 120.0, &quot;fps&quot;: 30.0}&#10;              mock_chunk.return_value = {&quot;chunks&quot;: [&quot;chunk1&quot;, &quot;chunk2&quot;]}&#10;              mock_aws.return_value = {&#10;                  &quot;success&quot;: True,&#10;                  &quot;provider&quot;: &quot;aws_rekognition&quot;,&#10;                  &quot;chunks&quot;: {&#10;                      &quot;chunk1&quot;: {&quot;scenes&quot;: [{&quot;start&quot;: 0, &quot;end&quot;: 30}]},&#10;                      &quot;chunk2&quot;: {&quot;scenes&quot;: [{&quot;start&quot;: 30, &quot;end&quot;: 60}]}&#10;                  }&#10;              }&#10;&#10;              # Start analysis via API&#10;              response = await async_client.post(&#10;                  &quot;/api/v1/video-analysis/analyze&quot;,&#10;                  json={&#10;                      &quot;video_url&quot;: &quot;s3://test-bucket/test-video.mp4&quot;,&#10;                      &quot;user_prompt&quot;: &quot;Find all scene changes&quot;,&#10;                      &quot;selected_providers&quot;: [&quot;aws_rekognition&quot;]&#10;                  }&#10;              )&#10;&#10;              assert response.status_code == 202&#10;              job_id = response.json()[&quot;job_id&quot;]&#10;&#10;              # Wait for task to complete (with timeout)&#10;              import asyncio&#10;              for _ in range(20):  # 10 seconds max&#10;                  job = await ProcessingJob.get(job_id)&#10;                  if job.status == JobStatus.COMPLETED:&#10;                      break&#10;                  await asyncio.sleep(0.5)&#10;&#10;              # Verify final state&#10;              assert job.status == JobStatus.COMPLETED&#10;              assert job.progress == 100&#10;              assert job.result is not None&#10;E       fixture 'async_client' not found&#10;&gt;       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, class_mocker, cov, doctest_namespace, event_loop, mock_beanie_document, mock_boto3_client, mock_celery_task, mock_current_user, mock_env_vars, mock_openai, mock_redis_client, mock_s3_service, mock_structlog, mocker, module_mocker, monkeypatch, no_cover, package_mocker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_video, sample_video_data, session_mocker, test_client, test_db, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;/services/backend/tests/integration/test_api_celery_integration.py:149&quot;">file /services/backend/tests/integration/test_api_celery_integration.py, line 149
+      async def test_full_pipeline_workflow(
+          self,
+          async_client: AsyncClient,
+          mock_current_user,
+          celery_app,
+          celery_worker
+      ):
+          """Test complete workflow from API to task completion."""
+          # Mock provider analysis tasks
+          with patch('backend.workers.video_analysis_tasks.analyze_with_rekognition') as mock_aws, \
+               patch('backend.workers.video_analysis_tasks.validate_and_extract_metadata') as mock_validate, \
+               patch('backend.workers.ingestion_tasks.chunk_video') as mock_chunk:
+
+              # Setup mock returns
+              mock_validate.return_value = {"duration": 120.0, "fps": 30.0}
+              mock_chunk.return_value = {"chunks": ["chunk1", "chunk2"]}
+              mock_aws.return_value = {
+                  "success": True,
+                  "provider": "aws_rekognition",
+                  "chunks": {
+                      "chunk1": {"scenes": [{"start": 0, "end": 30}]},
+                      "chunk2": {"scenes": [{"start": 30, "end": 60}]}
+                  }
+              }
+
+              # Start analysis via API
+              response = await async_client.post(
+                  "/api/v1/video-analysis/analyze",
+                  json={
+                      "video_url": "s3://test-bucket/test-video.mp4",
+                      "user_prompt": "Find all scene changes",
+                      "selected_providers": ["aws_rekognition"]
+                  }
+              )
+
+              assert response.status_code == 202
+              job_id = response.json()["job_id"]
+
+              # Wait for task to complete (with timeout)
+              import asyncio
+              for _ in range(20):  # 10 seconds max
+                  job = await ProcessingJob.get(job_id)
+                  if job.status == JobStatus.COMPLETED:
+                      break
+                  await asyncio.sleep(0.5)
+
+              # Verify final state
+              assert job.status == JobStatus.COMPLETED
+              assert job.progress == 100
+              assert job.result is not None
+E       fixture 'async_client' not found
+&gt;       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, class_mocker, cov, doctest_namespace, event_loop, mock_beanie_document, mock_boto3_client, mock_celery_task, mock_current_user, mock_env_vars, mock_openai, mock_redis_client, mock_s3_service, mock_structlog, mocker, module_mocker, monkeypatch, no_cover, package_mocker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_video, sample_video_data, session_mocker, test_client, test_db, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+/services/backend/tests/integration/test_api_celery_integration.py:149</error></testcase><testcase classname="tests.integration.test_api_celery_integration.TestAPICeleryIntegration" name="test_retry_failed_job" time="0.000"><error message="failed on setup with &quot;file /services/backend/tests/integration/test_api_celery_integration.py, line 200&#10;      async def test_retry_failed_job(&#10;          self,&#10;          async_client: AsyncClient,&#10;          mock_current_user&#10;      ):&#10;          &quot;&quot;&quot;Test retrying a failed job via API.&quot;&quot;&quot;&#10;          # Create failed job&#10;          job = ProcessingJob(&#10;              job_type=JobType.FULL_PIPELINE,&#10;              video_id=&quot;507f1f77bcf86cd799439011&quot;,&#10;              provider=&quot;multi-provider&quot;,&#10;              status=JobStatus.FAILED,&#10;              error_message=&quot;Provider timeout&quot;,&#10;              retry_count=1,&#10;              config={&quot;analysis_config&quot;: {&quot;chunk_duration&quot;: 30}}&#10;          )&#10;          await job.save()&#10;&#10;          # Mock Celery task&#10;          with patch('backend.workers.video_processing.process_video_full_pipeline.apply_async') as mock_task:&#10;              mock_result = MagicMock(spec=AsyncResult)&#10;              mock_result.id = &quot;retry-task-789&quot;&#10;              mock_task.return_value = mock_result&#10;&#10;              # Retry job&#10;              response = await async_client.post(&#10;                  f&quot;/api/v1/video-analysis/jobs/{job.id}/retry&quot;,&#10;                  json={&quot;force&quot;: False}&#10;              )&#10;&#10;              assert response.status_code == 202&#10;              data = response.json()&#10;&#10;              assert data[&quot;job_id&quot;] == str(job.id)&#10;              assert &quot;retry started&quot; in data[&quot;message&quot;]&#10;&#10;              # Verify task was triggered&#10;              mock_task.assert_called_once()&#10;&#10;              # Verify job status updated&#10;              updated_job = await ProcessingJob.get(job.id)&#10;              assert updated_job.status == JobStatus.PENDING&#10;              assert updated_job.retry_count == 2&#10;E       fixture 'async_client' not found&#10;&gt;       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, class_mocker, cov, doctest_namespace, event_loop, mock_beanie_document, mock_boto3_client, mock_celery_task, mock_current_user, mock_env_vars, mock_openai, mock_redis_client, mock_s3_service, mock_structlog, mocker, module_mocker, monkeypatch, no_cover, package_mocker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_video, sample_video_data, session_mocker, test_client, test_db, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;/services/backend/tests/integration/test_api_celery_integration.py:200&quot;">file /services/backend/tests/integration/test_api_celery_integration.py, line 200
+      async def test_retry_failed_job(
+          self,
+          async_client: AsyncClient,
+          mock_current_user
+      ):
+          """Test retrying a failed job via API."""
+          # Create failed job
+          job = ProcessingJob(
+              job_type=JobType.FULL_PIPELINE,
+              video_id="507f1f77bcf86cd799439011",
+              provider="multi-provider",
+              status=JobStatus.FAILED,
+              error_message="Provider timeout",
+              retry_count=1,
+              config={"analysis_config": {"chunk_duration": 30}}
+          )
+          await job.save()
+
+          # Mock Celery task
+          with patch('backend.workers.video_processing.process_video_full_pipeline.apply_async') as mock_task:
+              mock_result = MagicMock(spec=AsyncResult)
+              mock_result.id = "retry-task-789"
+              mock_task.return_value = mock_result
+
+              # Retry job
+              response = await async_client.post(
+                  f"/api/v1/video-analysis/jobs/{job.id}/retry",
+                  json={"force": False}
+              )
+
+              assert response.status_code == 202
+              data = response.json()
+
+              assert data["job_id"] == str(job.id)
+              assert "retry started" in data["message"]
+
+              # Verify task was triggered
+              mock_task.assert_called_once()
+
+              # Verify job status updated
+              updated_job = await ProcessingJob.get(job.id)
+              assert updated_job.status == JobStatus.PENDING
+              assert updated_job.retry_count == 2
+E       fixture 'async_client' not found
+&gt;       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, class_mocker, cov, doctest_namespace, event_loop, mock_beanie_document, mock_boto3_client, mock_celery_task, mock_current_user, mock_env_vars, mock_openai, mock_redis_client, mock_s3_service, mock_structlog, mocker, module_mocker, monkeypatch, no_cover, package_mocker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_video, sample_video_data, session_mocker, test_client, test_db, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+/services/backend/tests/integration/test_api_celery_integration.py:200</error></testcase></testsuite></testsuites>
