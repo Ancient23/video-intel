@@ -1,0 +1,89 @@
+version: '3.8'
+
+# Production overrides for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+  # Remove local databases in production (use managed services)
+  mongodb:
+    deploy:
+      replicas: 0
+
+  redis:
+    deploy:
+      replicas: 0
+
+  chromadb:
+    deploy:
+      replicas: 0
+
+  # API service production configuration
+  api:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_REPOSITORY}:${IMAGE_TAG:-latest}
+    restart: always
+    ports:
+      - "8003:8003"
+    environment:
+      # Override with production values from environment/secrets
+      - MONGODB_URL=${MONGODB_URL}
+      - REDIS_URL=${REDIS_URL}
+      - API_RELOAD=false
+      - API_LOG_LEVEL=info
+      - PYTHONOPTIMIZE=1
+    # Remove volume mounts in production
+    volumes: []
+    # Remove local dependencies
+    depends_on: []
+    # Production command without reload
+    command: ["python", "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8003", "--workers", "4"]
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+  # Worker service production configuration
+  worker:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_REPOSITORY}:${IMAGE_TAG:-latest}
+    restart: always
+    environment:
+      # Override with production values from environment/secrets
+      - MONGODB_URL=${MONGODB_URL}
+      - REDIS_URL=${REDIS_URL}
+      - CELERY_WORKER_CONCURRENCY=${CELERY_WORKER_CONCURRENCY:-4}
+      - CELERY_WORKER_MAX_MEMORY_PER_CHILD=${CELERY_WORKER_MAX_MEMORY_PER_CHILD:-2048000}
+      - PYTHONOPTIMIZE=1
+    # Remove volume mounts in production
+    volumes: []
+    # Remove local dependencies
+    depends_on: []
+    # Production worker command
+    command: ["python", "-m", "celery", "-A", "workers.celery_app", "worker", "--loglevel=info", "--concurrency=${CELERY_WORKER_CONCURRENCY:-4}", "--pool=threads", "--max-memory-per-child=${CELERY_WORKER_MAX_MEMORY_PER_CHILD:-2048000}"]
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+
+  # Remove Flower in production (use CloudWatch instead)
+  flower:
+    deploy:
+      replicas: 0
+
+# Production network configuration
+networks:
+  video-intelligence-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-video-intelligence
+
+# No local volumes in production
+volumes: {}

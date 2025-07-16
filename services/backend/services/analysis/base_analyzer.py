@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional
 import structlog
 
-from ...schemas.analysis import (
+from schemas.analysis import (
     ChunkInfo, AnalysisConfig, AnalysisResult,
     SceneDetection, ObjectDetection, ProviderType
 )

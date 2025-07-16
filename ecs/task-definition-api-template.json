@@ -1,0 +1,89 @@
+{
+  "family": "video-intelligence-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/video-intelligence-task-role",
+  "containerDefinitions": [
+    {
+      "name": "video-intelligence-api",
+      "image": "YOUR_ACCOUNT_ID.dkr.ecr.YOUR_REGION.amazonaws.com/video-intelligence-backend:latest",
+      "portMappings": [
+        {
+          "containerPort": 8003,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "command": [
+        "python", "-m", "uvicorn", "main:app",
+        "--host", "0.0.0.0", "--port", "8003"
+      ],
+      "environment": [
+        {
+          "name": "PYTHONPATH",
+          "value": "/app/services/backend"
+        },
+        {
+          "name": "PYTHONUNBUFFERED",
+          "value": "1"
+        },
+        {
+          "name": "API_HOST",
+          "value": "0.0.0.0"
+        },
+        {
+          "name": "API_PORT",
+          "value": "8003"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "MONGODB_URL",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/mongodb-url"
+        },
+        {
+          "name": "REDIS_URL",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/redis-url"
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/openai-api-key"
+        },
+        {
+          "name": "NVIDIA_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/nvidia-api-key"
+        },
+        {
+          "name": "JWT_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/jwt-secret"
+        },
+        {
+          "name": "S3_BUCKET",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/s3-bucket"
+        },
+        {
+          "name": "S3_OUTPUT_BUCKET",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/s3-output-bucket"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/video-intelligence-api",
+          "awslogs-region": "YOUR_REGION",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8003/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}

@@ -7,7 +7,7 @@ from datetime import datetime
 from beanie import PydanticObjectId
 import logging
 
-from ....schemas.api.video_analysis import (
+from schemas.api.video_analysis import (
     VideoAnalysisRequest,
     JobRetryRequest,
     VideoAnalysisResponse,
@@ -16,7 +16,7 @@ from ....schemas.api.video_analysis import (
     ProvidersListResponse,
     ErrorResponse
 )
-from ....schemas.analysis import (
+from schemas.analysis import (
     ProviderType,
     ProviderCapability,
     AnalysisGoal,
@@ -24,13 +24,13 @@ from ....schemas.analysis import (
     SceneDetection,
     ObjectDetection
 )
-from ....models.video import Video, VideoStatus
-from ....models.processing_job import ProcessingJob, JobStatus, JobType
-from ....models.scene import Scene
-from ....services.analysis.base_analyzer import BaseAnalyzer
-from ....services.chunking.orchestration_service import OrchestrationService
-from ....services.chunking.analysis_planner import AnalysisPlanner
-from ....core.deps import get_current_user  # Placeholder for authentication
+from models.video import Video, VideoStatus
+from models.processing_job import ProcessingJob, JobStatus, JobType
+from models.scene import Scene
+from services.analysis.base_analyzer import BaseAnalyzer
+from services.chunking.orchestration_service import VideoChunkingOrchestrationService as OrchestrationService
+from services.chunking.analysis_planner import AnalysisPlanner
+from core.deps import get_current_user  # Placeholder for authentication
 
 
 router = APIRouter(prefix="/video-analysis", tags=["video-analysis"])
@@ -572,7 +572,7 @@ async def start_analysis_pipeline(
     
     Triggers the Celery task for video processing.
     """
-    from ....workers.video_processing import process_video_full_pipeline
+    from workers.video_processing import process_video_full_pipeline
     
     # Trigger Celery task
     task = process_video_full_pipeline.apply_async(

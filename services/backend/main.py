@@ -4,29 +4,9 @@ Main FastAPI application for Video Intelligence Platform
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from beanie import init_beanie
-import motor.motor_asyncio
 
-from .api.v1.api import api_router
-from .core.database import get_database
-from .models import (
-    Video,
-    ProcessingJob,
-    Scene,
-    KnowledgeGraphNode,
-    KnowledgeGraphEdge,
-    ProjectStatus
-)
-
-# Document models for Beanie
-document_models = [
-    Video,
-    ProcessingJob,
-    Scene,
-    KnowledgeGraphNode,
-    KnowledgeGraphEdge,
-    ProjectStatus
-]
+from api.v1.api import api_router
+from core.database import Database
 
 
 @asynccontextmanager
@@ -40,8 +20,7 @@ async def lifespan(app: FastAPI):
     print("Starting Video Intelligence Platform API...")
     
     # Initialize database
-    database = await get_database()
-    await init_beanie(database=database, document_models=document_models)
+    await Database.connect()
     print("Database initialized")
     
     yield

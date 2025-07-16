@@ -250,11 +250,89 @@ POST /mcp/v1/tools/execute
   - NVIDIA Llama models via NIM
   - Custom fine-tuned models
 
-### Deployment (AWS Optimized)
-- **Compute**: ECS Fargate for API/Workers
-- **GPU Processing**: EC2 with GPU for local model inference
-- **Load Balancing**: ALB with WebSocket support
-- **Auto-scaling**: Based on queue depth and CPU/memory
+### Deployment Architecture
+
+#### Infrastructure Overview
+The platform is designed for cloud-native deployment with support for both local development and AWS production environments.
+
+##### Local Development
+- **Docker Compose**: Full stack with hot reloading
+- **Services**: MongoDB, Redis, ChromaDB, API, Worker, Flower
+- **Volumes**: Persistent data storage for databases
+- **Networking**: Bridge network for service communication
+
+##### Production (AWS)
+- **Compute**: ECS Fargate for stateless services
+  - API Service: 2-4 tasks behind ALB
+  - Worker Service: 2-8 tasks with auto-scaling
+- **Container Registry**: Amazon ECR for Docker images
+- **Databases**:
+  - MongoDB Atlas for document storage
+  - Amazon ElastiCache for Redis
+  - Pinecone/Milvus for vector database
+- **Storage**: S3 for video and artifact storage
+- **Secrets**: AWS Secrets Manager for API keys
+- **Monitoring**: CloudWatch logs and metrics
+
+#### CI/CD Pipeline
+- **GitHub Actions**: Automated deployment on push to main
+- **OIDC Authentication**: Secure AWS access without stored credentials
+- **Build Process**:
+  1. Build Docker image with FFmpeg support
+  2. Push to Amazon ECR
+  3. Update ECS task definitions
+  4. Rolling deployment with health checks
+- **Environment Separation**: Dev, staging, production
+
+#### Security Architecture
+- **Network Security**:
+  - VPC with private subnets for services
+  - Security groups with least privilege
+  - VPC endpoints for S3 and ECR
+- **Application Security**:
+  - JWT authentication (placeholder for now)
+  - API rate limiting
+  - CORS configuration
+- **Data Security**:
+  - Encryption at rest for all databases
+  - S3 bucket encryption
+  - Secrets rotation for API keys
+
+#### Scalability Considerations
+- **Horizontal Scaling**:
+  - API scales based on request rate
+  - Workers scale based on queue depth
+  - Fargate Spot for cost optimization
+- **Performance Optimization**:
+  - Redis caching layer
+  - S3 presigned URLs for direct video access
+  - CDN for static assets
+- **Resource Limits**:
+  - Worker memory limits (2-8GB)
+  - Celery concurrency settings
+  - Task timeout configurations
+
+#### Cost Optimization
+- **Compute**:
+  - Fargate Spot for workers (70% savings)
+  - Reserved capacity for predictable loads
+  - Auto-scaling to match demand
+- **Storage**:
+  - S3 lifecycle policies for old videos
+  - Intelligent tiering for infrequent access
+  - Compression for artifacts
+- **Data Transfer**:
+  - VPC endpoints to avoid NAT charges
+  - Direct S3 access from clients
+  - Regional deployment to minimize latency
+
+#### Open Source Deployment
+The platform is designed to be easily deployable by anyone:
+- **No Hardcoded Secrets**: All configuration via environment variables
+- **Documentation**: Comprehensive setup guides
+- **Templates**: ECS task definitions and IAM policies
+- **Scripts**: Validation and setup automation
+- **Examples**: Sample .env configuration
 
 ## Implementation Phases
 

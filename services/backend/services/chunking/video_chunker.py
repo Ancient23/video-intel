@@ -11,8 +11,8 @@ from botocore.exceptions import ClientError
 import structlog
 from pathlib import Path
 
-from ...schemas.analysis import ChunkInfo, AnalysisConfig
-from ...models import Video, ProcessingJob
+from schemas.analysis import ChunkInfo, AnalysisConfig
+from models import Video, ProcessingJob
 
 logger = structlog.get_logger()
 

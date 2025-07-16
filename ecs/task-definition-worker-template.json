@@ -1,0 +1,88 @@
+{
+  "family": "video-intelligence-worker",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "2048",
+  "memory": "8192",
+  "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/video-intelligence-task-role",
+  "containerDefinitions": [
+    {
+      "name": "video-intelligence-worker",
+      "image": "YOUR_ACCOUNT_ID.dkr.ecr.YOUR_REGION.amazonaws.com/video-intelligence-backend:latest",
+      "essential": true,
+      "command": [
+        "python", "-m", "celery", "-A", "celery_app", "worker",
+        "--loglevel=info", "--concurrency=4", "--pool=threads"
+      ],
+      "environment": [
+        {
+          "name": "PYTHONPATH",
+          "value": "/app/services/backend"
+        },
+        {
+          "name": "PYTHONUNBUFFERED",
+          "value": "1"
+        },
+        {
+          "name": "CELERY_WORKER_CONCURRENCY",
+          "value": "4"
+        },
+        {
+          "name": "CELERY_WORKER_MAX_MEMORY_PER_CHILD",
+          "value": "2048000"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "MONGODB_URL",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/mongodb-url"
+        },
+        {
+          "name": "REDIS_URL",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/redis-url"
+        },
+        {
+          "name": "CELERY_BROKER_URL",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/redis-url"
+        },
+        {
+          "name": "CELERY_RESULT_BACKEND",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/redis-url"
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/openai-api-key"
+        },
+        {
+          "name": "NVIDIA_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/nvidia-api-key"
+        },
+        {
+          "name": "S3_BUCKET",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/s3-bucket"
+        },
+        {
+          "name": "S3_OUTPUT_BUCKET",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/s3-output-bucket"
+        },
+        {
+          "name": "AWS_ACCESS_KEY_ID",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/aws-access-key-id"
+        },
+        {
+          "name": "AWS_SECRET_ACCESS_KEY",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:video-intelligence/aws-secret-access-key"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/video-intelligence-worker",
+          "awslogs-region": "YOUR_REGION",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

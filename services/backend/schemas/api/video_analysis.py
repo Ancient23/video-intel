@@ -5,12 +5,12 @@ from pydantic import BaseModel, Field, field_validator, HttpUrl
 from typing import List, Dict, Optional, Any
 from datetime import datetime
 from enum import Enum
-from ..analysis import (
+from schemas.analysis import (
     VideoType, AnalysisGoal, ProviderType, ProviderCapability,
     SceneDetection, ObjectDetection, AnalysisResult
 )
-from ...models.processing_job import JobStatus, JobType
-from ...models.video import VideoStatus
+from models.processing_job import JobStatus, JobType
+from models.video import VideoStatus
 
 
 # Request Schemas

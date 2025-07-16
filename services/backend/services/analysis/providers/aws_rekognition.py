@@ -10,8 +10,8 @@ import boto3
 from botocore.exceptions import ClientError
 import structlog
 
-from ..base_analyzer import BaseAnalyzer
-from ....schemas.analysis import (
+from services.analysis.base_analyzer import BaseAnalyzer
+from schemas.analysis import (
     ChunkInfo, AnalysisConfig, AnalysisResult, AnalysisGoal,
     SceneDetection, ObjectDetection, ProviderType
 )

@@ -8,10 +8,9 @@ like AWS Rekognition, NVIDIA VILA, etc.
 from celery import Task
 from celery_app import celery_app
 from utils.memory_monitor import VideoProcessingTask, monitor_memory
-from services.analysis.providers.aws_rekognition import AWSRekognitionProvider
-from services.analysis.providers.nvidia_vila import NvidiaVilaProvider
-from core.database import get_async_session
-from utils.cache import cache_result, get_cached_result
+from services.analysis.providers.aws_rekognition import AWSRekognitionAnalyzer as AWSRekognitionProvider
+from services.analysis.providers.nvidia_vila import NvidiaVilaAnalyzer as NvidiaVilaProvider
+from utils.cache import cache_chunk_result, get_cached_chunk_result
 import logging
 from typing import Dict, Any, Optional
 
@@ -33,8 +32,7 @@ def analyze_with_rekognition(self, video_path: str, chunk_info: Dict[str, Any], 
     """
     try:
         # Check cache first
-        cache_key = f"rekognition:{job_id}:{chunk_info['chunk_id']}"
-        cached = get_cached_result(cache_key)
+        cached = get_cached_chunk_result(chunk_info['chunk_id'], 'aws_rekognition')
         if cached:
             logger.info(f"Using cached Rekognition results for chunk {chunk_info['chunk_id']}")
             return cached
@@ -58,7 +56,7 @@ def analyze_with_rekognition(self, video_path: str, chunk_info: Dict[str, Any], 
         )
         
         # Cache results
-        cache_result(cache_key, results, ttl=86400 * 7)  # Cache for 7 days
+        cache_chunk_result(chunk_info['chunk_id'], 'aws_rekognition', results, ttl_days=7)
         
         return {
             'provider': 'aws_rekognition',
@@ -87,8 +85,7 @@ def analyze_with_nvidia(self, video_path: str, chunk_info: Dict[str, Any], job_i
     """
     try:
         # Check cache first
-        cache_key = f"nvidia:{job_id}:{chunk_info['chunk_id']}"
-        cached = get_cached_result(cache_key)
+        cached = get_cached_chunk_result(chunk_info['chunk_id'], 'nvidia_vila')
         if cached:
             logger.info(f"Using cached NVIDIA results for chunk {chunk_info['chunk_id']}")
             return cached
@@ -110,7 +107,7 @@ def analyze_with_nvidia(self, video_path: str, chunk_info: Dict[str, Any], job_i
         )
         
         # Cache results
-        cache_result(cache_key, results, ttl=86400 * 7)
+        cache_chunk_result(chunk_info['chunk_id'], 'nvidia_vila', results, ttl_days=7)
         
         return {
             'provider': 'nvidia_vila',

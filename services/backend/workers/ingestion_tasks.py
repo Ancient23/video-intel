@@ -8,12 +8,11 @@ and knowledge is extracted and stored.
 from celery import group, chain, chord
 from celery_app import celery_app
 from utils.memory_monitor import VideoProcessingTask, monitor_memory
-from services.chunking.orchestration_service import OrchestrationService
-from services.analysis.providers.aws_rekognition import AWSRekognitionProvider
-from services.analysis.providers.nvidia_vila import NvidiaVilaProvider
+from services.chunking.orchestration_service import VideoChunkingOrchestrationService as OrchestrationService
+from services.analysis.providers.aws_rekognition import AWSRekognitionAnalyzer as AWSRekognitionProvider
+from services.analysis.providers.nvidia_vila import NvidiaVilaAnalyzer as NvidiaVilaProvider
 from models.video import Video
 from models.processing_job import ProcessingJob
-from core.database import get_async_session
 import logging
 
 logger = logging.getLogger(__name__)

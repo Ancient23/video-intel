@@ -3,7 +3,7 @@ Analysis Planner - Interprets user prompts and selects appropriate providers
 """
 import re
 from typing import List, Dict, Set, Tuple
-from ...schemas.analysis import (
+from schemas.analysis import (
     AnalysisConfig, AnalysisGoal, VideoType, ProviderType,
     ProviderCapability
 )

@@ -1,0 +1,160 @@
+name: Deploy Backend to AWS ECS
+
+# This workflow deploys the Video Intelligence Platform backend to AWS ECS
+# It builds a Docker image, pushes it to ECR, and updates ECS services
+
+on:
+  push:
+    branches:
+      - main  # Deploy on push to main branch
+    paths:
+      - 'services/backend/**'  # Only deploy when backend code changes
+      - 'Dockerfile'           # Or when Dockerfile changes
+      - '.github/workflows/deploy-backend.yml'  # Or when this workflow changes
+
+  workflow_dispatch:  # Allow manual deployment
+
+permissions:
+  contents: read
+  id-token: write  # Required for AWS OIDC authentication
+
+# Configure these values as GitHub Secrets in your repository settings
+# See docs/deployment/aws-deployment.md for setup instructions
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}  # e.g., us-east-1
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}  # Your AWS account ID
+  ECR_REPOSITORY: ${{ secrets.AWS_ECR_REPOSITORY }}  # ECR repository name
+  ECS_CLUSTER: ${{ secrets.AWS_ECS_CLUSTER }}  # ECS cluster name
+  
+  # API Service Configuration
+  ECS_SERVICE_API: ${{ secrets.AWS_ECS_SERVICE_API }}  # API service name
+  ECS_TASK_DEFINITION_API: ${{ secrets.AWS_ECS_TASK_DEFINITION_API }}  # API task definition family
+  CONTAINER_NAME_API: "video-intelligence-api"  # Container name in task definition
+  
+  # Worker Service Configuration  
+  ECS_SERVICE_WORKER: ${{ secrets.AWS_ECS_SERVICE_WORKER }}  # Worker service name
+  ECS_TASK_DEFINITION_WORKER: ${{ secrets.AWS_ECS_TASK_DEFINITION_WORKER }}  # Worker task definition family
+  CONTAINER_NAME_WORKER: "video-intelligence-worker"  # Container name in task definition
+
+jobs:
+  deploy:
+    name: Build and Deploy to ECS
+    runs-on: ubuntu-latest
+    environment: production  # GitHub environment for deployment protection rules
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE }}  # IAM role ARN
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Build and push Docker image (single image for both API and Worker)
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build the Docker image
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          
+          # Push image with commit SHA tag
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          
+          # Also tag and push as 'latest'
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          
+          # Output the image URI for later steps
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      # Deploy API Service
+      - name: Download API task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_TASK_DEFINITION_API }} \
+            --query taskDefinition > task-definition-api.json
+
+      - name: Update API task definition with command
+        run: |
+          # Update the command for API service
+          jq '.containerDefinitions[0].command = [
+            "python", "-m", "uvicorn", "main:app",
+            "--host", "0.0.0.0", "--port", "8003"
+          ]' task-definition-api.json > task-definition-api-updated.json
+          mv task-definition-api-updated.json task-definition-api.json
+
+      - name: Fill in new API image ID
+        id: task-def-api
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition-api.json
+          container-name: ${{ env.CONTAINER_NAME_API }}
+          image: ${{ steps.build-image.outputs.image }}
+
+      - name: Deploy API to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def-api.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE_API }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      # Deploy Worker Service
+      - name: Download Worker task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_TASK_DEFINITION_WORKER }} \
+            --query taskDefinition > task-definition-worker.json
+
+      - name: Update Worker task definition with command
+        run: |
+          # Update the command for Worker service
+          jq '.containerDefinitions[0].command = [
+            "python", "-m", "celery", "-A", "celery_app", "worker",
+            "--loglevel=info", "--concurrency=4", "--pool=threads"
+          ]' task-definition-worker.json > task-definition-worker-updated.json
+          mv task-definition-worker-updated.json task-definition-worker.json
+
+      - name: Fill in new Worker image ID
+        id: task-def-worker
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition-worker.json
+          container-name: ${{ env.CONTAINER_NAME_WORKER }}
+          image: ${{ steps.build-image.outputs.image }}
+
+      - name: Deploy Worker to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def-worker.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE_WORKER }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Clean up task definition files
+        if: always()
+        run: |
+          rm -f task-definition-api.json task-definition-worker.json
+
+      # Notify deployment status
+      - name: Deployment Success
+        if: success()
+        run: |
+          echo "✅ Deployment successful!"
+          echo "API Image: ${{ steps.build-image.outputs.image }}"
+          echo "Deployed to cluster: ${{ env.ECS_CLUSTER }}"
+
+      - name: Deployment Failed
+        if: failure()
+        run: |
+          echo "❌ Deployment failed!"
+          echo "Check the logs above for details"

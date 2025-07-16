@@ -59,35 +59,81 @@ This project includes a development knowledge base powered by the same RAG techn
 
 ### Prerequisites
 - Python 3.11+
-- Docker & Docker Compose
+- Docker & Docker Compose v2.0+
+- AWS Account (for S3 storage)
 - 8GB+ RAM recommended
 
-### Setup
+### 🚀 30-Second Setup
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd video-intelligence-project
+# Clone and enter the repository
+git clone https://github.com/your-org/video-intelligence-platform.git
+cd video-intelligence-platform
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Copy environment template and configure
+cp .env.example .env
+# Edit .env with your AWS credentials and API keys
 
-# Install dependencies
-pip install -r requirements.txt
+# Validate your environment
+python scripts/validate-env.py
 
-# Start services
-docker compose up -d mongodb redis
+# Start all services with Docker
+docker-compose up -d
 
-# Initialize project
-python scripts/init_project_status.py
-python scripts/init_technical_debt.py
-
-# Run tests
-pytest services/backend/tests/
+# Verify everything is running
+docker-compose ps
+curl http://localhost:8003/health
 ```
 
-See [DEVELOPMENT_SETUP.md](./DEVELOPMENT_SETUP.md) for detailed setup instructions.
+### Service URLs
+- 🌐 **API**: http://localhost:8003
+- 📊 **Flower** (Celery monitor): http://localhost:5555
+- 🗄️ **MongoDB**: localhost:27017
+- 🔄 **Redis**: localhost:6379
+- 🧠 **ChromaDB**: http://localhost:8000
+
+### Detailed Setup
+
+```bash
+# 1. Environment Configuration
+cp .env.example .env
+# Configure these required variables:
+# - AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+# - S3_BUCKET, S3_OUTPUT_BUCKET (must exist in your AWS account)
+# - OPENAI_API_KEY
+
+# 2. Validate Configuration
+python scripts/validate-env.py
+
+# 3. Start Services
+docker-compose up -d
+
+# 4. Check Service Health
+docker-compose ps
+docker-compose logs -f  # View logs
+
+# 5. Optional: Set up Python environment for development
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r services/backend/requirements.txt
+
+# 6. Run Tests
+docker-compose exec api pytest
+```
+
+### 🚢 Production Deployment
+
+Deploy to AWS ECS with GitHub Actions:
+
+```bash
+# Set up GitHub secrets for deployment
+./scripts/setup-github-deployment.sh
+
+# Push to main branch to trigger deployment
+git push origin main
+```
+
+See [AWS Deployment Guide](./docs/deployment/aws-deployment.md) for complete instructions.
 
 ## Development Workflow
 
@@ -125,6 +171,24 @@ video-intelligence-project/
 ├── dev-knowledge-base/      # Development RAG system
 └── PROMPTS.md              # AI assistant templates
 ```
+
+## Docker Support
+
+The platform includes complete Docker support for both development and production:
+
+### Development
+- **Hot Reloading**: Code changes automatically reload
+- **All Services**: MongoDB, Redis, ChromaDB, API, Worker, Flower
+- **Volume Mounts**: Your code is synced with containers
+- **Easy Commands**: `docker-compose up -d` to start everything
+
+### Production
+- **Optimized Images**: Multi-stage builds with FFmpeg
+- **AWS ECS Ready**: Task definitions and GitHub Actions included
+- **Secrets Management**: AWS Secrets Manager integration
+- **Auto-scaling**: Based on load and queue depth
+
+See [Docker Setup Guide](./docs/deployment/docker-setup.md) for details.
 
 ## Contributing
 

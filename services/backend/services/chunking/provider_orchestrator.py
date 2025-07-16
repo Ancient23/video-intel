@@ -6,14 +6,14 @@ import time
 from typing import List, Dict, Any, Optional
 import structlog
 
-from ..analysis.base_analyzer import BaseAnalyzer
-from ..analysis.providers.nvidia_vila import NvidiaVilaAnalyzer
-from ..analysis.providers.aws_rekognition import AWSRekognitionAnalyzer
-from ...schemas.analysis import (
+from services.analysis.base_analyzer import BaseAnalyzer
+from services.analysis.providers.nvidia_vila import NvidiaVilaAnalyzer
+from services.analysis.providers.aws_rekognition import AWSRekognitionAnalyzer
+from schemas.analysis import (
     ChunkInfo, AnalysisConfig, AnalysisResult, ProviderType,
     SceneDetection, ObjectDetection, AnalysisGoal
 )
-from ...models import ProcessingJob, Video
+from models import ProcessingJob, Video
 
 logger = structlog.get_logger()
 

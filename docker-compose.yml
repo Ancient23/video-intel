@@ -1,0 +1,152 @@
+services:
+  # MongoDB for document storage
+  mongodb:
+    image: mongo:7.0
+    container_name: video-intelligence-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: video-intelligence
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - video-intelligence-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and Celery broker
+  redis:
+    image: redis:7-alpine
+    container_name: video-intelligence-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - video-intelligence-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ChromaDB for local vector database
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: video-intelligence-chromadb
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+    networks:
+      - video-intelligence-network
+    # Disabled health check for now - ChromaDB API endpoints vary by version
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+
+  # FastAPI application
+  api:
+    build:
+      context: ./services/backend
+      dockerfile: Dockerfile
+    container_name: video-intelligence-api
+    restart: unless-stopped
+    ports:
+      - "8003:8003"
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/services/backend
+      - PYTHONUNBUFFERED=1
+      - MONGODB_URL=mongodb://mongodb:27017/video-intelligence
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+    volumes:
+      - ./services/backend:/services/backend
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_started
+    networks:
+      - video-intelligence-network
+    command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003", "--reload"]
+
+  # Celery worker
+  worker:
+    build:
+      context: ./services/backend
+      dockerfile: Dockerfile
+    container_name: video-intelligence-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/services/backend
+      - PYTHONUNBUFFERED=1
+      - MONGODB_URL=mongodb://mongodb:27017/video-intelligence
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - CELERY_WORKER_CONCURRENCY=4
+      - CELERY_WORKER_MAX_MEMORY_PER_CHILD=2048000
+    volumes:
+      - ./services/backend:/services/backend
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_started
+    networks:
+      - video-intelligence-network
+    command: ["python", "-m", "celery", "-A", "celery_app", "worker", "--loglevel=info", "--concurrency=4", "--pool=threads"]
+
+  # Optional: Flower for Celery monitoring
+  flower:
+    build:
+      context: ./services/backend
+      dockerfile: Dockerfile
+    container_name: video-intelligence-flower
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/services/backend
+      - PYTHONUNBUFFERED=1
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+    networks:
+      - video-intelligence-network
+    command: ["python", "-m", "celery", "-A", "celery_app", "flower", "--port=5555"]
+
+networks:
+  video-intelligence-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  chromadb_data:

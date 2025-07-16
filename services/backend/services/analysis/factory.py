@@ -7,8 +7,8 @@ and consistent provider instantiation across the application.
 
 from typing import Dict, Type, Optional
 from .base_analyzer import BaseAnalyzer
-from .providers.aws_rekognition import AWSRekognitionProvider
-from .providers.nvidia_vila import NvidiaVilaProvider
+from .providers.aws_rekognition import AWSRekognitionAnalyzer as AWSRekognitionProvider
+from .providers.nvidia_vila import NvidiaVilaAnalyzer as NvidiaVilaProvider
 import logging
 
 logger = logging.getLogger(__name__)

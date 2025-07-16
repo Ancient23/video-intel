@@ -11,12 +11,12 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import logging
 
-from ..celery_app import celery_app
-from ..utils.memory_monitor import VideoProcessingTask
-from ..models.processing_job import ProcessingJob, JobStatus
-from ..models.video import Video, VideoStatus
-from ..models.video_analysis_job import VideoAnalysisJob, AnalysisStatus
-from ..schemas.analysis import AnalysisConfig, ProviderType
+from celery_app import celery_app
+from utils.memory_monitor import VideoProcessingTask
+from models.processing_job import ProcessingJob, JobStatus
+from models.video import Video, VideoStatus
+from models.video_analysis_job import VideoAnalysisJob, AnalysisStatus
+from schemas.analysis import AnalysisConfig, ProviderType
 from beanie import PydanticObjectId
 
 logger = logging.getLogger(__name__)

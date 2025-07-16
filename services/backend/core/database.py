@@ -2,7 +2,7 @@ import os
 from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
-from ..models import document_models
+from models import document_models
 
 
 class Database:

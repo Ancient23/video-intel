@@ -11,12 +11,12 @@ import structlog
 from pathlib import Path
 from contextlib import contextmanager
 
-from ..base_analyzer import BaseAnalyzer
-from ....schemas.analysis import (
+from services.analysis.base_analyzer import BaseAnalyzer
+from schemas.analysis import (
     ChunkInfo, AnalysisConfig, AnalysisResult, AnalysisGoal,
     SceneDetection, ObjectDetection, ProviderType
 )
-from ...s3_utils import download_from_s3, is_s3_uri
+from services.s3_utils import download_from_s3, is_s3_uri
 from botocore.exceptions import ClientError
 
 logger = structlog.get_logger()

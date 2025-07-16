@@ -15,8 +15,8 @@ from datetime import datetime
 import structlog
 from beanie import PydanticObjectId
 
-from ...models import Video, VideoStatus, Scene, ProcessingJob, JobStatus, JobType
-from ...schemas.analysis import (
+from models import Video, VideoStatus, Scene, ProcessingJob, JobStatus, JobType
+from schemas.analysis import (
     AnalysisConfig, ChunkInfo, AnalysisResult,
     SceneDetection, AnalysisGoal
 )
