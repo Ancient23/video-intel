@@ -45,6 +45,16 @@ async def update_technical_debt():
                 "component": "core/monitoring",
                 "item_id": "MON-001",
                 "resolution": "Partially resolved: Copied logging configuration and memory monitoring. Still need metrics collection and health checks."
+            },
+            {
+                "component": "api/video_analysis",
+                "item_id": "API-002",
+                "resolution": "Implemented complete API-Celery integration: Created process_video_full_pipeline task with workflow orchestration, connected API endpoints to trigger Celery tasks, added progress tracking with MongoDB updates, implemented retry logic and error handling, added merge_provider_results and finalize_video_analysis tasks, created comprehensive integration tests"
+            },
+            {
+                "component": "analysis/providers",
+                "item_id": "PROV-001",
+                "resolution": "Implemented S3 download functionality in NVIDIA VILA provider: Added S3 download using existing s3_utils.download_from_s3(), implemented proper error handling for S3 access failures (NoSuchKey, AccessDenied), added automatic temporary file cleanup in finally block, created comprehensive unit tests covering all S3 scenarios, follows same pattern as AWS Rekognition provider"
             }
         ]
         
@@ -68,54 +78,7 @@ async def update_technical_debt():
                 )
                 print(f"  ✅ {resolved['item_id']} - Marked as RESOLVED")
         
-        # Add new debt items discovered during implementation
-        new_debt_items = [
-            {
-                "component": "api/video_analysis",
-                "item": {
-                    "id": "API-002",
-                    "title": "API Endpoints Need Celery Task Integration",
-                    "description": "Video analysis API endpoints use placeholder background tasks. Need to integrate with actual Celery tasks.",
-                    "file_path": "services/backend/api/v1/routers/video_analysis.py",
-                    "line_numbers": [197, 573, 580],
-                    "category": "incomplete",
-                    "severity": "high",
-                    "estimated_effort_hours": 4.0,
-                    "tags": ["api", "celery", "integration"]
-                }
-            },
-            {
-                "component": "workers/tasks",
-                "item": {
-                    "id": "TASK-001",
-                    "title": "Celery Tasks Need MongoDB Integration",
-                    "description": "Celery tasks have placeholders for MongoDB operations. Need to implement actual database updates.",
-                    "file_path": "services/backend/workers/",
-                    "category": "incomplete",
-                    "severity": "high",
-                    "estimated_effort_hours": 6.0,
-                    "tags": ["celery", "mongodb", "integration"]
-                }
-            }
-        ]
-        
-        # Add new debt items
-        from backend.models import TechnicalDebtItem, DebtSeverity, DebtCategory
-        
-        for new_debt in new_debt_items:
-            item = TechnicalDebtItem(
-                id=new_debt["item"]["id"],
-                title=new_debt["item"]["title"],
-                description=new_debt["item"]["description"],
-                file_path=new_debt["item"].get("file_path"),
-                line_numbers=new_debt["item"].get("line_numbers"),
-                category=DebtCategory(new_debt["item"]["category"]),
-                severity=DebtSeverity(new_debt["item"]["severity"]),
-                estimated_effort_hours=new_debt["item"]["estimated_effort_hours"],
-                tags=new_debt["item"]["tags"]
-            )
-            tech_debt.add_debt_item(new_debt["component"], item)
-            print(f"  ⚠️  {item.id} - Added new debt item")
+        # No new debt items to add in this update
         
         # Save changes
         await tech_debt.save()
@@ -134,18 +97,21 @@ async def update_technical_debt():
         print("\nResolved Items:")
         for resolved in resolved_items:
             if resolved["item_id"] != "MON-001":
-                print(f"  - [{resolved['item_id']}] {resolved['resolution']}")
+                print(f"  - [{resolved['item_id']}] {resolved['resolution'][:80]}...")
         
-        print("\nNew High Priority Items:")
-        for severity_item in report["by_severity"]["high"]:
-            if severity_item["id"] in ["API-002", "TASK-001"]:
-                print(f"  - [{severity_item['id']}] {severity_item['title']}")
+        print("\nRemaining High Priority Items:")
+        high_priority_open = [
+            item for item in report["by_severity"].get("high", [])
+            if item.get("status") == "open"
+        ]
+        for item in high_priority_open[:5]:
+            print(f"  - [{item['id']}] {item['title']} ({item.get('estimated_hours', 'N/A')}h)")
         
         print("\nNext Steps:")
-        print("  1. Complete API-Celery integration (API-002)")
-        print("  2. Implement MongoDB updates in Celery tasks (TASK-001)")  
-        print("  3. Resolve NVIDIA VILA S3 download (PROV-001)")
-        print("  4. Implement authentication (SEC-001)")
+        print("  1. Implement authentication system (SEC-001) - CRITICAL")
+        print("  2. Start embeddings service (CORE-001)")
+        print("  3. Implement knowledge graph service (CORE-002)")
+        print("  4. Vector database integration (DB-001)")
         
         print(f"\n✅ Technical debt updated successfully!")
         
