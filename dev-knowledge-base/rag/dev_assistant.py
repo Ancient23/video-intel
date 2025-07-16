@@ -9,15 +9,17 @@ from langchain.schema import Document
 from langchain_community.vectorstores import Chroma
 import re
 from dotenv import load_dotenv
+import sys
 
-# Load environment variables
-load_dotenv()
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.lazy_init import with_timeout, LazyChromaDB, LazyOpenAI, debug_print
 
 
 class DevelopmentAssistant:
     """RAG-powered development assistant"""
     
-    def __init__(self):
+    def __init__(self, debug: bool = False):
         # Initialize OpenAI
         self.llm = None
         self.embeddings = None
@@ -26,54 +28,93 @@ class DevelopmentAssistant:
         self.chroma_client = None
         self.collections = {}
         
-        # Store configuration
-        self.chroma_type = os.getenv("CHROMA_CLIENT_TYPE", "persistent")
-        self.chroma_host = os.getenv("CHROMA_HOST", "localhost")
-        self.chroma_port = int(os.getenv("CHROMA_PORT", "8000"))
-        self.chroma_persist_path = os.getenv("CHROMA_PERSIST_PATH", "./knowledge/chromadb")
+        # Environment variables will be loaded lazily
+        self._env_loaded = False
+        self.chroma_type = None
+        self.chroma_host = None
+        self.chroma_port = None
+        self.chroma_persist_path = None
+        
+        # Debug mode
+        self.debug = debug
+        
+        # Lazy connections
+        self._lazy_chromadb = None
+        self._lazy_openai = None
+    
+    def _load_env(self):
+        """Load environment variables lazily"""
+        if not self._env_loaded:
+            load_dotenv()
+            self.chroma_type = os.getenv("CHROMA_CLIENT_TYPE", "persistent")
+            self.chroma_host = os.getenv("CHROMA_HOST", "localhost")
+            self.chroma_port = int(os.getenv("CHROMA_PORT", "8000"))
+            self.chroma_persist_path = os.getenv("CHROMA_PERSIST_PATH", "./knowledge/chromadb")
+            self._env_loaded = True
     
     def _init_openai(self):
         """Initialize OpenAI clients lazily"""
-        if self.llm is None:
-            self.llm = ChatOpenAI(temperature=0, model_name="gpt-4")
-        if self.embeddings is None:
-            self.embeddings = OpenAIEmbeddings()
+        if self.llm is None or self.embeddings is None:
+            debug_print("Initializing OpenAI connection...", self.debug)
+            try:
+                # Don't use timeout decorator on the entire method
+                # Just create the clients directly
+                from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+                self.llm = ChatOpenAI(temperature=0, model_name="gpt-4")
+                self.embeddings = OpenAIEmbeddings()
+                debug_print("OpenAI connection established", self.debug)
+            except Exception as e:
+                debug_print(f"Error initializing OpenAI: {e}", self.debug)
+                raise
     
     def _init_chromadb(self):
         """Initialize ChromaDB client lazily"""
         if self.chroma_client is not None:
             return
+        
+        # Load environment variables if not already loaded
+        self._load_env()
+        
+        debug_print(f"Initializing ChromaDB ({self.chroma_type})...", self.debug)
+        
+        try:
+            if self.chroma_type == "http":
+                # Use HTTP client to connect to Docker ChromaDB
+                self.chroma_client = chromadb.HttpClient(
+                    host=self.chroma_host,
+                    port=self.chroma_port,
+                    settings=Settings(
+                        anonymized_telemetry=False
+                    )
+                )
+            else:
+                # Use persistent client for local development
+                self.chroma_client = chromadb.PersistentClient(
+                    path=self.chroma_persist_path,
+                    settings=Settings(
+                        anonymized_telemetry=False,
+                        allow_reset=True
+                    )
+                )
             
-        if self.chroma_type == "http":
-            # Use HTTP client to connect to Docker ChromaDB
-            self.chroma_client = chromadb.HttpClient(
-                host=self.chroma_host,
-                port=self.chroma_port,
-                settings=Settings(
-                    anonymized_telemetry=False
-                )
-            )
-        else:
-            # Use persistent client for local development
-            self.chroma_client = chromadb.PersistentClient(
-                path=self.chroma_persist_path,
-                settings=Settings(
-                    anonymized_telemetry=False,
-                    allow_reset=True
-                )
-            )
+            debug_print("ChromaDB connection established", self.debug)
+        except Exception as e:
+            debug_print(f"Error initializing ChromaDB: {e}", self.debug)
+            raise
     
     def _get_collection(self, name: str) -> chromadb.Collection:
         """Get or cache a collection"""
-        self._init_chromadb()  # Ensure ChromaDB is initialized
-        
-        if name not in self.collections:
-            try:
+        try:
+            self._init_chromadb()  # Ensure ChromaDB is initialized
+            
+            if name not in self.collections:
+                debug_print(f"Loading collection: {name}", self.debug)
                 self.collections[name] = self.chroma_client.get_collection(name)
-            except Exception as e:
-                print(f"Warning: Could not get collection {name}: {e}")
-                return None
-        return self.collections[name]
+                
+            return self.collections[name]
+        except Exception as e:
+            debug_print(f"Error getting collection {name}: {e}", self.debug)
+            return None
     
     def query_patterns(self, query: str, category: Optional[str] = None) -> str:
         """Query implementation patterns"""
@@ -92,21 +133,33 @@ class DevelopmentAssistant:
                 "pdf_knowledge"
             ]
         
-        # Generate query embedding using OpenAI
-        self._init_openai()  # Ensure OpenAI is initialized
-        
         try:
-            query_embedding = self.embeddings.embed_query(query)
+            # Generate query embedding using OpenAI
+            self._init_openai()  # Ensure OpenAI is initialized
+            
+            try:
+                query_embedding = self.embeddings.embed_query(query)
+            except Exception as e:
+                error_msg = f"Error generating query embedding: {e}"
+                debug_print(error_msg, self.debug)
+                return f"Error: Could not generate query embedding. Please check OpenAI API configuration.\n\nDetails: {str(e)}"
+        except TimeoutError as e:
+            return f"Error: OpenAI initialization timed out. Please check your API key and network connection.\n\nDetails: {str(e)}"
         except Exception as e:
-            print(f"Error generating query embedding: {e}")
-            return "Error: Could not generate query embedding. Please check OpenAI API configuration."
+            return f"Error: Failed to initialize OpenAI. {str(e)}"
         
         # Search in collections
         all_results = []
+        collections_found = 0
         
         for collection_name in collection_names:
-            collection = self._get_collection(collection_name)
-            if not collection:
+            try:
+                collection = self._get_collection(collection_name)
+                if not collection:
+                    continue
+                collections_found += 1
+            except Exception as e:
+                debug_print(f"Skipping collection {collection_name}: {e}", self.debug)
                 continue
                 
             try:
@@ -132,6 +185,10 @@ class DevelopmentAssistant:
                 print(f"Error querying collection {collection_name}: {e}")
                 continue
         
+        # Check if we found any collections
+        if collections_found == 0:
+            return f"Error: No ChromaDB collections found. The knowledge base appears to be empty.\n\nTo populate it, run:\npython scripts/populate_knowledge_base.py <old_repo_path> <pdf_dir>"
+        
         # Sort by relevance
         all_results.sort(key=lambda x: x["relevance"], reverse=True)
         
@@ -148,6 +205,10 @@ class DevelopmentAssistant:
             context_parts.append(f"**Source**: {source} (from {collection})\n{content}\n")
         
         context = "\n---\n".join(context_parts)
+        
+        # If no results found
+        if not context:
+            return f"No relevant patterns found for: {query}\n\nThe knowledge base has {collections_found} collections but no matching content.\n\nTry a more general query or populate the knowledge base with more data."
         
         # Generate response with context
         prompt = f"""Based on the VideoCommentator project patterns and the new Video Intelligence architecture,

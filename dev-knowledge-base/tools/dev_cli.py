@@ -44,7 +44,9 @@ async def init_mongodb():
 
 
 @click.group()
-def cli():
+@click.option('--debug', is_flag=True, help='Enable debug output')
+@click.pass_context
+def cli(ctx, debug):
     """Development knowledge base CLI
     
     A unified tool for managing development knowledge, prompts, and project status.
@@ -56,19 +58,28 @@ def cli():
       
     Note: For prompt execution, use: python scripts/prompt.py
     """
+    # Store debug flag in context
+    ctx.ensure_object(dict)
+    ctx.obj['debug'] = debug
+    
     # Load environment variables
     env_path = Path(__file__).parent.parent.parent / ".env"
     if env_path.exists():
         load_dotenv(env_path)
+        if debug:
+            console.print("[dim]Loaded environment from .env[/dim]")
 
 
 @cli.command()
 @click.argument('query')
 @click.option('--category', '-c', help='Filter by category (e.g., lessons_learned, api_documentation)')
 @click.option('--limit', '-l', default=5, help='Number of results to return')
-def ask(query: str, category: Optional[str], limit: int):
+@click.pass_context
+def ask(ctx, query: str, category: Optional[str], limit: int):
     """Query the development knowledge base"""
     console.print(f"\n🔍 Searching for: [bold cyan]{query}[/bold cyan]\n")
+    
+    debug = ctx.obj.get('debug', False)
     
     try:
         # Lazy import
@@ -76,7 +87,10 @@ def ask(query: str, category: Optional[str], limit: int):
         if DevelopmentAssistant is None:
             from rag.dev_assistant import DevelopmentAssistant
         
-        assistant = DevelopmentAssistant()
+        if debug:
+            console.print("[dim]Initializing DevelopmentAssistant...[/dim]")
+        
+        assistant = DevelopmentAssistant(debug=debug)
         response = assistant.query_patterns(query, category)
         
         # Display response in a nice panel
@@ -85,16 +99,32 @@ def ask(query: str, category: Optional[str], limit: int):
             title="💡 Knowledge Base Response",
             border_style="cyan"
         ))
+    except TimeoutError as e:
+        console.print(f"[red]Operation timed out: {e}[/red]")
+        console.print("[yellow]Tips:[/yellow]")
+        console.print("  • Check if ChromaDB is running: docker compose ps")
+        console.print("  • Verify OpenAI API key is set in .env")
+        console.print("  • Try running with --debug flag for more details")
+    except ConnectionError as e:
+        console.print(f"[red]Connection error: {e}[/red]")
+        console.print("[yellow]Make sure all services are running:[/yellow]")
+        console.print("  • docker compose up -d")
     except Exception as e:
         console.print(f"[red]Error querying knowledge base: {e}[/red]")
-        console.print("[yellow]Make sure ChromaDB collections are initialized and OpenAI API key is set.[/yellow]")
+        if debug:
+            import traceback
+            console.print("[dim]Full traceback:[/dim]")
+            traceback.print_exc()
 
 
 @cli.command()
 @click.argument('component')
-def suggest(component: str):
+@click.pass_context
+def suggest(ctx, component: str):
     """Get implementation suggestions for a component"""
     console.print(f"\n🔧 Getting suggestions for: [bold cyan]{component}[/bold cyan]\n")
+    
+    debug = ctx.obj.get('debug', False)
     
     try:
         # Lazy import
@@ -102,7 +132,10 @@ def suggest(component: str):
         if DevelopmentAssistant is None:
             from rag.dev_assistant import DevelopmentAssistant
         
-        assistant = DevelopmentAssistant()
+        if debug:
+            console.print("[dim]Initializing DevelopmentAssistant...[/dim]")
+        
+        assistant = DevelopmentAssistant(debug=debug)
         suggestions = assistant.suggest_implementation(component)
         
         # Display as table
@@ -124,10 +157,21 @@ def suggest(component: str):
             table.add_row(key.replace("_", " ").title(), value_str)
         
         console.print(table)
+    except TimeoutError as e:
+        console.print(f"[red]Operation timed out: {e}[/red]")
+        console.print("[yellow]Tips:[/yellow]")
+        console.print("  • Check if services are running: docker compose ps")
+        console.print("  • Try running with --debug flag for more details")
+    except ConnectionError as e:
+        console.print(f"[red]Connection error: {e}[/red]")
+        console.print("[yellow]Make sure all services are running:[/yellow]")
+        console.print("  • docker compose up -d")
     except Exception as e:
         console.print(f"[red]Error getting suggestions: {e}[/red]")
-        import traceback
-        traceback.print_exc()
+        if debug:
+            import traceback
+            console.print("[dim]Full traceback:[/dim]")
+            traceback.print_exc()
 
 
 @cli.command()
@@ -195,13 +239,19 @@ def status():
 @cli.command()
 @click.argument('topic')
 @click.option('--output', '-o', help='Output file path (optional)')
-def context(topic: str, output: Optional[str]):
+@click.pass_context
+def context(ctx, topic: str, output: Optional[str]):
     """Generate context for Claude CLI on a specific topic"""
     console.print(f"\n🤖 Generating Claude context for: [bold cyan]{topic}[/bold cyan]\n")
+    
+    debug = ctx.obj.get('debug', False)
     
     try:
         # Dynamic import to avoid initialization issues
         from tools.generate_claude_context import ClaudeContextGenerator
+        
+        if debug:
+            console.print("[dim]Initializing ClaudeContextGenerator...[/dim]")
         
         generator = ClaudeContextGenerator()
         context_text = generator.generate_context(topic)
@@ -220,8 +270,21 @@ def context(topic: str, output: Optional[str]):
                 border_style="cyan"
             ))
             
+    except TimeoutError as e:
+        console.print(f"[red]Operation timed out: {e}[/red]")
+        console.print("[yellow]Tips:[/yellow]")
+        console.print("  • Check if services are running: docker compose ps")
+        console.print("  • Try running with --debug flag for more details")
+    except ConnectionError as e:
+        console.print(f"[red]Connection error: {e}[/red]")
+        console.print("[yellow]Make sure all services are running:[/yellow]")
+        console.print("  • docker compose up -d")
     except Exception as e:
         console.print(f"[red]Error generating context: {e}[/red]")
+        if debug:
+            import traceback
+            console.print("[dim]Full traceback:[/dim]")
+            traceback.print_exc()
 
 
 @cli.command()

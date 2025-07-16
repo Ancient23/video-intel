@@ -8,19 +8,23 @@ from beanie import init_beanie
 import asyncio
 import sys
 
-# Add scripts directory to path to import models
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
-from populate_knowledge_base import ProjectKnowledge
+# Add parent directory to path to import models
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from models import ProjectKnowledge
 
 
 class ClaudeContextGenerator:
     """Generates context files for Claude CLI"""
     
     def __init__(self):
-        self.assistant = DevelopmentAssistant()
+        self.assistant = None
     
     def generate_context(self, topic: str) -> str:
         """Generate context for a specific topic"""
+        
+        # Initialize assistant lazily
+        if self.assistant is None:
+            self.assistant = DevelopmentAssistant()
         
         # Query knowledge base
         patterns = self.assistant.query_patterns(topic)
