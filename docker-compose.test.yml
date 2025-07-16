@@ -1,0 +1,91 @@
+# Docker Compose configuration for running tests
+# This creates isolated test databases to avoid polluting development data
+
+services:
+  # Test MongoDB instance
+  test-mongodb:
+    image: mongo:7.0
+    container_name: video-intelligence-test-mongodb
+    ports:
+      - "27018:27017"  # Different port to avoid conflicts
+    environment:
+      MONGO_INITDB_DATABASE: video-intelligence-test
+    networks:
+      - test-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  # Test Redis instance
+  test-redis:
+    image: redis:7-alpine
+    container_name: video-intelligence-test-redis
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  # Test runner service
+  test-runner:
+    build:
+      context: .
+      dockerfile: services/backend/Dockerfile
+    container_name: video-intelligence-test-runner
+    depends_on:
+      test-mongodb:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+    environment:
+      # Test database connections
+      MONGODB_URL: mongodb://test-mongodb:27017/video-intelligence-test
+      REDIS_URL: redis://test-redis:6379/0
+      
+      # AWS credentials (using moto for mocking)
+      AWS_ACCESS_KEY_ID: test-access-key
+      AWS_SECRET_ACCESS_KEY: test-secret-key
+      AWS_DEFAULT_REGION: us-east-1
+      S3_BUCKET: test-bucket
+      S3_OUTPUT_BUCKET: test-output-bucket
+      
+      # API keys (mocked)
+      OPENAI_API_KEY: test-openai-key
+      NVIDIA_API_KEY: test-nvidia-key
+      
+      # Other settings
+      VECTOR_DB_TYPE: milvus
+      ENVIRONMENT: test
+      PYTHONPATH: /services/backend
+      
+    volumes:
+      # Mount source code for live updates
+      - ./services/backend:/services/backend
+      # Mount test results
+      - ./test-results:/test-results
+    working_dir: /services/backend
+    command: >
+      sh -c "
+        echo 'Waiting for services to be ready...' &&
+        sleep 5 &&
+        echo 'Running tests with coverage...' &&
+        python -m pytest tests/ 
+          --cov=. 
+          --cov-report=html:/test-results/htmlcov 
+          --cov-report=xml:/test-results/coverage.xml 
+          --cov-report=term 
+          --junit-xml=/test-results/junit.xml 
+          -v
+      "
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge

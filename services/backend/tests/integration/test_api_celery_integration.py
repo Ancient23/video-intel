@@ -11,10 +11,10 @@ from beanie import PydanticObjectId
 from httpx import AsyncClient
 from celery.result import AsyncResult
 
-from backend.models.video import Video, VideoStatus
-from backend.models.processing_job import ProcessingJob, JobStatus, JobType
-from backend.models.video_analysis_job import VideoAnalysisJob, AnalysisStatus
-from backend.schemas.analysis import ProviderType, AnalysisGoal
+from models.video import Video, VideoStatus
+from models.processing_job import ProcessingJob, JobStatus, JobType
+# from models.video_analysis_job import VideoAnalysisJob, AnalysisStatus  # TODO: Create this model
+from schemas.analysis import ProviderType, AnalysisGoal
 
 
 @pytest.mark.asyncio

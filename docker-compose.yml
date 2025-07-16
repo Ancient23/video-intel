@@ -143,6 +143,49 @@ services:
       - video-intelligence-network
     command: ["python", "-m", "celery", "-A", "celery_app", "flower", "--port=5555"]
 
+  # Test service for running tests with development databases
+  test:
+    build:
+      context: .
+      dockerfile: services/backend/Dockerfile
+    container_name: video-intelligence-test
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Use development databases for testing
+      MONGODB_URL: mongodb://mongodb:27017/video-intelligence-test
+      REDIS_URL: redis://redis:6379/1  # Use different Redis DB
+      
+      # AWS credentials (will be mocked in tests)
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-test-bucket}
+      S3_OUTPUT_BUCKET: ${S3_OUTPUT_BUCKET:-test-output-bucket}
+      
+      # API keys (will be mocked in tests)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-test}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-test}
+      
+      # Other settings
+      VECTOR_DB_TYPE: ${VECTOR_DB_TYPE:-milvus}
+      ENVIRONMENT: test
+      PYTHONPATH: /services/backend
+      
+    volumes:
+      # Mount source code for live updates
+      - ./services/backend:/services/backend
+      # Mount test results
+      - ./test-results:/test-results
+    working_dir: /services/backend
+    networks:
+      - video-intelligence-network
+    profiles:
+      - test  # Only run when explicitly requested
+
 networks:
   video-intelligence-network:
     driver: bridge
