@@ -14,6 +14,9 @@ A scalable video analysis platform that transforms videos into searchable, conve
 - 🚀 [Developer Onboarding](./docs/DEVELOPER_ONBOARDING.md) - Getting started guide
 - 📋 [Product Requirements](./docs/new/video-intelligence-prd.md) - Detailed specifications
 - 🔧 [Scripts Documentation](./scripts/README.md) - Management script usage
+- 🧪 [Testing Guide](./docs/testing/TESTING.md) - How to run tests
+- 🧪 [Quick Test Reference](./docs/testing/QUICK_TEST_REFERENCE.md) - Quick Examples for running tests
+
 
 ## Project Status
 
@@ -117,8 +120,8 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r services/backend/requirements.txt
 
-# 6. Run Tests
-docker-compose exec api pytest
+# 6. Run Tests (see Testing Guide for details)
+./scripts/test-docker.sh
 ```
 
 ### 🚢 Production Deployment
@@ -195,7 +198,7 @@ See [Docker Setup Guide](./docs/deployment/docker-setup.md) for details.
 1. Check [Technical Debt](./docs/TECHNICAL_DEBT.md) for areas needing work
 2. Follow patterns in the knowledge base
 3. Update project status after changes
-4. Add tests for new features
+4. Add tests for new features (see [Testing Guide](./docs/testing/TESTING.md))
 5. Document significant patterns
 
 ## License
