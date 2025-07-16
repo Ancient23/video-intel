@@ -8,6 +8,10 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.schema import Document
 from langchain_community.vectorstores import Chroma
 import re
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 
 class DevelopmentAssistant:
@@ -15,22 +19,54 @@ class DevelopmentAssistant:
     
     def __init__(self):
         # Initialize OpenAI
-        self.llm = ChatOpenAI(temperature=0, model_name="gpt-4")
-        self.embeddings = OpenAIEmbeddings()
+        self.llm = None
+        self.embeddings = None
         
-        # Initialize ChromaDB client
-        self.chroma_client = chromadb.PersistentClient(
-            path="./knowledge/chromadb",
-            settings=Settings(
-                anonymized_telemetry=False,
-                allow_reset=True
-            )
-        )
-        
+        # ChromaDB client will be initialized on first use
+        self.chroma_client = None
         self.collections = {}
+        
+        # Store configuration
+        self.chroma_type = os.getenv("CHROMA_CLIENT_TYPE", "persistent")
+        self.chroma_host = os.getenv("CHROMA_HOST", "localhost")
+        self.chroma_port = int(os.getenv("CHROMA_PORT", "8000"))
+        self.chroma_persist_path = os.getenv("CHROMA_PERSIST_PATH", "./knowledge/chromadb")
+    
+    def _init_openai(self):
+        """Initialize OpenAI clients lazily"""
+        if self.llm is None:
+            self.llm = ChatOpenAI(temperature=0, model_name="gpt-4")
+        if self.embeddings is None:
+            self.embeddings = OpenAIEmbeddings()
+    
+    def _init_chromadb(self):
+        """Initialize ChromaDB client lazily"""
+        if self.chroma_client is not None:
+            return
+            
+        if self.chroma_type == "http":
+            # Use HTTP client to connect to Docker ChromaDB
+            self.chroma_client = chromadb.HttpClient(
+                host=self.chroma_host,
+                port=self.chroma_port,
+                settings=Settings(
+                    anonymized_telemetry=False
+                )
+            )
+        else:
+            # Use persistent client for local development
+            self.chroma_client = chromadb.PersistentClient(
+                path=self.chroma_persist_path,
+                settings=Settings(
+                    anonymized_telemetry=False,
+                    allow_reset=True
+                )
+            )
     
     def _get_collection(self, name: str) -> chromadb.Collection:
         """Get or cache a collection"""
+        self._init_chromadb()  # Ensure ChromaDB is initialized
+        
         if name not in self.collections:
             try:
                 self.collections[name] = self.chroma_client.get_collection(name)
@@ -57,6 +93,8 @@ class DevelopmentAssistant:
             ]
         
         # Generate query embedding using OpenAI
+        self._init_openai()  # Ensure OpenAI is initialized
+        
         try:
             query_embedding = self.embeddings.embed_query(query)
         except Exception as e:
@@ -126,6 +164,8 @@ Consider:
 
 Provide a concise, actionable response."""
         
+        self._init_openai()  # Ensure OpenAI is initialized
+        
         try:
             response = self.llm.invoke(prompt).content
             return response
@@ -153,6 +193,8 @@ Provide a concise, actionable response."""
         similar = []
         
         # Generate query embedding
+        self._init_openai()  # Ensure OpenAI is initialized
+        
         try:
             query_text = f"{component} implementation pattern structure"
             query_embedding = self.embeddings.embed_query(query_text)
