@@ -4,16 +4,20 @@ NVIDIA VILA Vision-Language Model Provider
 import os
 import time
 import base64
+import tempfile
 from typing import List, Dict, Any, Optional
 import httpx
 import structlog
 from pathlib import Path
+from contextlib import contextmanager
 
 from ..base_analyzer import BaseAnalyzer
 from ....schemas.analysis import (
     ChunkInfo, AnalysisConfig, AnalysisResult, AnalysisGoal,
     SceneDetection, ObjectDetection, ProviderType
 )
+from ...s3_utils import download_from_s3, is_s3_uri
+from botocore.exceptions import ClientError
 
 logger = structlog.get_logger()
 
@@ -73,22 +77,44 @@ class NvidiaVilaAnalyzer(BaseAnalyzer):
     ) -> List[str]:
         """Extract frames from video chunk"""
         frames = []
-        
-        # Use local path if available, otherwise download from S3
-        video_path = chunk.local_path
-        if not video_path and chunk.s3_uri:
-            # TODO: Download from S3 to temp file
-            raise NotImplementedError("S3 download not implemented yet")
-        
-        # Extract frames using ffmpeg
-        import ffmpeg
-        
-        # Calculate frame interval
-        fps = 30  # Assume 30 fps, should get from video info
-        total_frames = int(chunk.duration * fps)
-        interval = max(1, total_frames // max_frames)
+        temp_file = None
         
         try:
+            # Determine video path
+            video_path = chunk.local_path
+            
+            # Download from S3 if needed
+            if not video_path and chunk.s3_uri:
+                if not is_s3_uri(chunk.s3_uri):
+                    raise ValueError(f"Invalid S3 URI: {chunk.s3_uri}")
+                
+                try:
+                    logger.info(f"Downloading video from S3: {chunk.s3_uri}")
+                    temp_file = download_from_s3(chunk.s3_uri)
+                    video_path = temp_file
+                    logger.info(f"Downloaded to temporary file: {temp_file}")
+                except ClientError as e:
+                    error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+                    if error_code == 'NoSuchKey':
+                        raise ValueError(f"Video not found in S3: {chunk.s3_uri}")
+                    elif error_code == 'AccessDenied':
+                        raise ValueError(f"Access denied to S3 object: {chunk.s3_uri}")
+                    else:
+                        raise ValueError(f"S3 download failed: {str(e)}")
+                except Exception as e:
+                    raise ValueError(f"Failed to download video from S3: {str(e)}")
+            
+            if not video_path:
+                raise ValueError("No video path available (neither local nor S3)")
+            
+            # Extract frames using ffmpeg
+            import ffmpeg
+            
+            # Calculate frame interval
+            fps = 30  # Assume 30 fps, should get from video info
+            total_frames = int(chunk.duration * fps)
+            interval = max(1, total_frames // max_frames)
+            
             # Extract frames at intervals
             for i in range(0, min(max_frames, total_frames), interval):
                 frame_time = i / fps
@@ -106,8 +132,19 @@ class NvidiaVilaAnalyzer(BaseAnalyzer):
                 frames.append(frame_b64)
                 
         except Exception as e:
-            logger.error("Frame extraction failed", error=str(e))
+            logger.error("Frame extraction failed", 
+                        error=str(e), 
+                        chunk_id=chunk.chunk_id,
+                        video_path=video_path)
             raise
+        finally:
+            # Clean up temporary file
+            if temp_file and os.path.exists(temp_file):
+                try:
+                    os.unlink(temp_file)
+                    logger.info(f"Cleaned up temporary file: {temp_file}")
+                except Exception as e:
+                    logger.warning(f"Failed to clean up temp file: {temp_file}", error=str(e))
         
         logger.info(f"Extracted {len(frames)} frames from chunk {chunk.chunk_id}")
         return frames
