@@ -11,20 +11,20 @@ import asyncio
 from typing import Optional, List, Dict
 from datetime import datetime
 from dotenv import load_dotenv
-import subprocess
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # Import our modules
-from rag.dev_assistant import DevelopmentAssistant
-from ingestion.extract_knowledge import KnowledgeExtractor
 import motor.motor_asyncio
 from beanie import init_beanie
 
-# Import models from populate_knowledge_base script
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
-from populate_knowledge_base import ProjectKnowledge, ExtractionReport
+# Import models
+from models import ProjectKnowledge, ExtractionReport
+
+# Lazy imports to avoid initialization issues
+DevelopmentAssistant = None
+KnowledgeExtractor = None
 
 console = Console()
 
@@ -51,9 +51,10 @@ def cli():
     
     Key commands:
       ask      - Query development patterns and knowledge
-      prompt   - Execute AI assistant prompts for workflows
       status   - Check project implementation progress
       suggest  - Get implementation recommendations
+      
+    Note: For prompt execution, use: python scripts/prompt.py
     """
     # Load environment variables
     env_path = Path(__file__).parent.parent.parent / ".env"
@@ -70,6 +71,11 @@ def ask(query: str, category: Optional[str], limit: int):
     console.print(f"\n🔍 Searching for: [bold cyan]{query}[/bold cyan]\n")
     
     try:
+        # Lazy import
+        global DevelopmentAssistant
+        if DevelopmentAssistant is None:
+            from rag.dev_assistant import DevelopmentAssistant
+        
         assistant = DevelopmentAssistant()
         response = assistant.query_patterns(query, category)
         
@@ -91,6 +97,11 @@ def suggest(component: str):
     console.print(f"\n🔧 Getting suggestions for: [bold cyan]{component}[/bold cyan]\n")
     
     try:
+        # Lazy import
+        global DevelopmentAssistant
+        if DevelopmentAssistant is None:
+            from rag.dev_assistant import DevelopmentAssistant
+        
         assistant = DevelopmentAssistant()
         suggestions = assistant.suggest_implementation(component)
         
@@ -189,6 +200,7 @@ def context(topic: str, output: Optional[str]):
     console.print(f"\n🤖 Generating Claude context for: [bold cyan]{topic}[/bold cyan]\n")
     
     try:
+        # Dynamic import to avoid initialization issues
         from tools.generate_claude_context import ClaudeContextGenerator
         
         generator = ClaudeContextGenerator()
@@ -272,14 +284,27 @@ def collections():
         import chromadb
         from chromadb.config import Settings
         
-        # Connect to ChromaDB
-        client = chromadb.PersistentClient(
-            path="./knowledge/chromadb",
-            settings=Settings(
-                anonymized_telemetry=False,
-                allow_reset=True
+        # Check environment for ChromaDB client type
+        chroma_type = os.getenv("CHROMA_CLIENT_TYPE", "persistent")
+        
+        if chroma_type == "http":
+            # Use HTTP client to connect to Docker ChromaDB
+            client = chromadb.HttpClient(
+                host=os.getenv("CHROMA_HOST", "localhost"),
+                port=int(os.getenv("CHROMA_PORT", "8000")),
+                settings=Settings(
+                    anonymized_telemetry=False
+                )
             )
-        )
+        else:
+            # Use persistent client for local development
+            client = chromadb.PersistentClient(
+                path=os.getenv("CHROMA_PERSIST_PATH", "./knowledge/chromadb"),
+                settings=Settings(
+                    anonymized_telemetry=False,
+                    allow_reset=True
+                )
+            )
         
         # Get all collections
         collections = client.list_collections()
@@ -308,59 +333,9 @@ def collections():
         
     except Exception as e:
         console.print(f"[red]Error accessing ChromaDB: {e}[/red]")
+        console.print("[yellow]Check CHROMA_CLIENT_TYPE in .env (use 'persistent' for local or 'http' for Docker)[/yellow]")
 
 
-@cli.command()
-@click.argument('action', default='list')
-@click.argument('prompt_name', required=False)
-@click.option('--category', '-c', help='Filter by category (for list action)')
-@click.option('--json', is_flag=True, help='Output in JSON format')
-@click.pass_context
-def prompt(ctx, action: str, prompt_name: Optional[str], category: Optional[str], json: bool):
-    """Manage and execute AI assistant prompts
-    
-    Actions:
-      list     - List available prompts
-      show     - Display prompt content
-      exec     - Execute a prompt
-      execute  - Execute a prompt (alias)
-      export   - Export prompts as JSON
-      workflow - Run a workflow prompt
-      help     - Show prompt system help
-    
-    Examples:
-      ./dev-cli prompt list
-      ./dev-cli prompt show status-check
-      ./dev-cli prompt exec status-check
-      ./dev-cli prompt workflow next-and-implement
-    """
-    # Get the path to prompt.py script
-    project_root = Path(__file__).parent.parent.parent
-    prompt_script = project_root / "scripts" / "prompt.py"
-    
-    if not prompt_script.exists():
-        console.print(f"[red]Error: prompt.py script not found at {prompt_script}[/red]")
-        return
-    
-    # Build command
-    cmd = [sys.executable, str(prompt_script), action]
-    
-    if prompt_name:
-        cmd.append(prompt_name)
-    
-    if category:
-        cmd.extend(['--category', category])
-    
-    if json:
-        cmd.append('--json')
-    
-    try:
-        # Run the prompt.py script and pass through stdin/stdout
-        result = subprocess.run(cmd, cwd=str(project_root))
-        sys.exit(result.returncode)
-    except Exception as e:
-        console.print(f"[red]Error executing prompt command: {e}[/red]")
-        sys.exit(1)
 
 
 if __name__ == "__main__":
