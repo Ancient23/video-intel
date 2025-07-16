@@ -203,22 +203,88 @@ Required variables (see `.env.example`):
 - `NVIDIA_API_KEY` (optional)
 - `VECTOR_DB_TYPE` (milvus or pinecone)
 
+## Docker Development Environment
+
+### Starting the Environment
+```bash
+# Start all services
+docker compose up -d
+
+# Check service status
+docker compose ps
+
+# View logs
+docker compose logs -f [service_name]
+
+# Stop services
+docker compose down
+```
+
+### Services and Ports
+- **API (FastAPI)**: http://localhost:8003
+  - Health: http://localhost:8003/health
+  - Docs: http://localhost:8003/api/docs
+  - OpenAPI: http://localhost:8003/api/v1/openapi.json
+- **MongoDB**: localhost:27017
+- **Redis**: localhost:6379
+- **ChromaDB**: http://localhost:8000
+- **Celery Worker**: Running with 4 threads
+- **Flower**: http://localhost:5555 (currently disabled due to import issues)
+
+### Important Notes
+- All Python imports must be absolute (no relative imports with ..)
+- PYTHONPATH is set to /services/backend in containers
+- FFmpeg is installed for video processing
+- Use real AWS S3 buckets via environment variables
+
+### Common Issues and Fixes
+1. **Import Errors**: Ensure all imports are absolute
+2. **Port Conflicts**: Stop old VideoCommentator containers first
+3. **Missing Dependencies**: Add to requirements.txt and rebuild
+4. **Class Name Mismatches**: Check actual class names in files
+
 ## Quick Commands
 
 ```bash
 # Start development environment
 docker compose up -d
-source venv/bin/activate
 
-# Run tests
-pytest services/backend/tests/
+# Run tests in container
+docker compose exec api pytest
+
+# Execute Python scripts
+docker compose exec api python /services/backend/scripts/script_name.py
+
+# Access container shell
+docker compose exec api bash
+
+# Rebuild after requirements change
+docker compose build --no-cache
 
 # Check implementation patterns
 ./dev-cli ask "What's the pattern for [topic]?"
-
-# Generate API documentation
-cd services/backend && python -m api.generate_docs
 ```
+
+## Recent Updates (July 2025)
+
+### Docker Infrastructure (COMPLETED)
+- ✅ Full Docker setup with docker-compose.yml
+- ✅ Production-ready Dockerfile with FFmpeg
+- ✅ GitHub Actions for AWS ECS deployment
+- ✅ Open source friendly (no hardcoded secrets)
+- ✅ Comprehensive deployment documentation
+- ✅ All services running and tested locally
+
+### Known Issues
+- Flower monitoring UI has import errors (disabled)
+- No automated tests for Docker setup yet
+
+### Next Priority Tasks
+1. Implement authentication system (CRITICAL)
+2. Create comprehensive test suite
+3. Implement video chunking with FFmpeg
+4. AWS Rekognition provider integration
+5. S3 integration for video storage
 
 ## When in Doubt
 
@@ -226,6 +292,7 @@ cd services/backend && python -m api.generate_docs
 2. Query knowledge base: `./dev-cli ask "[question]"`
 3. Reference old code: Look in `/Users/filip/Documents/Source/VideoCommentator-MonoRepo` 
 4. Follow NVIDIA blueprints: Check PDFs in knowledge base
+5. Check deployment docs: `docs/deployment/`
 
 Remember: This project demonstrates its own capabilities - we're using RAG to build a RAG system!
 
