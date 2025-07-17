@@ -1,13 +1,11 @@
-#!/usr/bin/env python3
-import sys
-from pathlib import Path
+#!/bin/bash
+# Dev CLI wrapper script that handles environment activation
 
-# Add project to path
-project_root = Path(__file__).parent
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(project_root / "dev-knowledge-base"))
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-from tools.dev_cli import cli
+# Activate virtual environment
+source "$SCRIPT_DIR/venv/bin/activate"
 
-if __name__ == "__main__":
-    cli()
+# Change to dev-knowledge-base directory and run the actual CLI
+cd "$SCRIPT_DIR/dev-knowledge-base" && python -m tools.dev_cli "$@"

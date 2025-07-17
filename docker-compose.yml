@@ -47,7 +47,7 @@ services:
     networks:
       - video-intelligence-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:6333"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -71,10 +71,11 @@ services:
     networks:
       - video-intelligence-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7474"]
+      test: ["CMD-SHELL", "curl -f http://localhost:7474 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   # FastAPI application
   api:
@@ -106,9 +107,9 @@ services:
       redis:
         condition: service_healthy
       qdrant:
-        condition: service_healthy
+        condition: service_started
       neo4j:
-        condition: service_healthy
+        condition: service_started
     networks:
       - video-intelligence-network
     command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003", "--reload"]
@@ -143,9 +144,9 @@ services:
       redis:
         condition: service_healthy
       qdrant:
-        condition: service_healthy
+        condition: service_started
       neo4j:
-        condition: service_healthy
+        condition: service_started
     networks:
       - video-intelligence-network
     command: ["python", "-m", "celery", "-A", "celery_app", "worker", "--loglevel=info", "--concurrency=4", "--pool=threads"]

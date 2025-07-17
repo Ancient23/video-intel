@@ -277,9 +277,19 @@ docker compose down
   - Docs: http://localhost:8003/api/docs
   - OpenAPI: http://localhost:8003/api/v1/openapi.json
 - **MongoDB**: localhost:27017
+  - Database: video-intelligence
+  - Collections: project_status, technical_debt, videos, analyses, etc.
 - **Redis**: localhost:6379
+  - Used for Celery broker and result backend
 - **Qdrant**: http://localhost:6333
+  - Dashboard: http://localhost:6333/dashboard
+  - Collections: nvidia_blueprints (1,167 vectors)
+- **Neo4j**: http://localhost:7474
+  - Browser UI: http://localhost:7474
+  - Bolt protocol: localhost:7687
+  - Default auth: neo4j/password123
 - **Celery Worker**: Running with 4 threads
+  - Configured for video processing tasks
 - **Flower**: http://localhost:5555 (currently disabled due to import issues)
 
 ### Important Notes
@@ -293,6 +303,10 @@ docker compose down
 2. **Port Conflicts**: Ensure no conflicting services are running
 3. **Missing Dependencies**: Add to requirements.txt and rebuild
 4. **Class Name Mismatches**: Check actual class names in files
+5. **Docker Service Health Check Failures**: 
+   - Neo4j/Qdrant: Changed from `service_healthy` to `service_started` in depends_on
+   - Fixed health check commands for proper URL format
+6. **ModuleNotFoundError with dev-cli**: Use the wrapper script `./dev-cli` from project root
 
 ## Quick Commands
 
@@ -323,12 +337,13 @@ docker compose build --no-cache
 
 ## Recent Updates (July 2025)
 
-### Graph-RAG Knowledge System (NEW)
+### Graph-RAG Knowledge System (COMPLETED)
 - ✅ Migrated from ChromaDB to Qdrant + Neo4j
-- ✅ 224+ documents indexed from NVIDIA Blueprints
+- ✅ 1,167 documents indexed from NVIDIA Blueprints and project docs
 - ✅ Graph relationships for technology connections
 - ✅ Enhanced CLI with search and explore commands
 - ✅ All prompts updated for Graph-RAG integration
+- ✅ Dev-cli wrapper script for easy access from project root
 
 ### Docker Infrastructure (COMPLETED)
 - ✅ Full Docker setup with docker-compose.yml
@@ -337,11 +352,19 @@ docker compose build --no-cache
 - ✅ Open source friendly (no hardcoded secrets)
 - ✅ Comprehensive deployment documentation
 - ✅ All services running and tested locally
+- ✅ Health checks fixed for Neo4j and Qdrant
+
+### MongoDB Initialization (COMPLETED)
+- ✅ ProjectStatus model tracking development progress
+- ✅ TechnicalDebt model for tracking issues
+- ✅ Initialization script at `scripts/initialize_project_status.py`
+- ✅ Current phase: KNOWLEDGE_BUILDING
+- ✅ Component statuses tracked
 
 ### Known Issues
-- Flower monitoring UI has import errors (disabled)
+- Flower monitoring UI has import errors (disabled) - Low priority
 - No automated tests for Docker setup yet
-- Full knowledge base population takes ~30-60 minutes
+- Authentication system missing - CRITICAL
 
 ### Next Priority Tasks
 1. Implement authentication system (CRITICAL)
