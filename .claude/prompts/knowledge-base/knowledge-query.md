@@ -13,19 +13,20 @@ Query the development knowledge base for patterns, solutions, and implementation
 ## Prerequisites
 - Virtual environment activated
 - Knowledge base initialized
-- ChromaDB running
+- Qdrant and Neo4j running
 
 ## Query Types
 
-### Pattern Queries
+### Pattern Queries (Graph-RAG Enhanced)
 ```bash
-# Implementation patterns
+# Implementation patterns - Use search for better results
+./dev-cli search "[component] implementation patterns"
+./dev-cli search "NVIDIA Blueprint [component]"
 ./dev-cli ask "How to implement [component]"
-./dev-cli ask "Best practices for [feature]"
-./dev-cli ask "Pattern for [specific task]"
 
-# Architecture patterns
-./dev-cli ask "Architecture for [system]"
+# Architecture patterns with graph exploration
+./dev-cli search "architecture patterns [system]"
+./dev-cli explore "[architecture pattern]" --depth 2
 ./dev-cli ask "How to structure [component]"
 ```
 
@@ -41,12 +42,16 @@ Query the development knowledge base for patterns, solutions, and implementation
 ./dev-cli ask "Performance issues with [feature]"
 ```
 
-### VideoCommentator Reference
+### Technology and Pattern Reference
 ```bash
-# Existing implementations
-./dev-cli ask "VideoCommentator [feature] implementation"
-./dev-cli ask "How did VideoCommentator handle [problem]"
-./dev-cli ask "Reusable code from VideoCommentator"
+# Search for specific implementations
+./dev-cli search "[technology] implementation examples"
+./dev-cli search "production [component] patterns"
+./dev-cli explore "[technology]" --depth 2
+
+# NVIDIA Blueprint patterns
+./dev-cli search "NVIDIA Blueprint [feature]"
+./dev-cli ask "NVIDIA video processing patterns"
 ```
 
 ### Cost and Optimization
@@ -59,29 +64,35 @@ Query the development knowledge base for patterns, solutions, and implementation
 
 ## Steps
 
-1. Activate environment and query:
+1. **Start with Graph-RAG search** (MANDATORY):
    ```bash
    source venv/bin/activate
-   ./dev-cli ask "[your question]"
+   ./dev-cli search "[your topic]"
+   ./dev-cli explore "[main technology]" --depth 2
    ```
 
-2. For implementation suggestions:
+2. **Then ask specific questions**:
+   ```bash
+   ./dev-cli ask "[your specific question]"
+   ```
+
+3. **For implementation suggestions**:
    ```bash
    ./dev-cli suggest "[component name]"
    ```
 
-3. Check multiple related topics:
-   - Patterns from VideoCommentator
-   - NVIDIA blueprint insights
+4. Check multiple related topics:
+   - NVIDIA Blueprint patterns (PRIORITY)
+   - Infrastructure best practices
+   - Cost optimization strategies
    - Known issues and solutions
-   - Best practices
-   - Cost considerations
+   - Technology relationships
 
-4. If no results found:
-   - Check old VideoCommentator repo directly
-   - Review PRD for specifications
-   - Check MongoDB schemas for structure
-   - Ask more specific questions
+5. If no results found:
+   - Try different search terms
+   - Use entity exploration
+   - Check PRD for specifications
+   - Review MongoDB schemas
 
 ## Query Strategies
 

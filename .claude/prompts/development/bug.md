@@ -24,11 +24,19 @@ Debug and fix issues in the Video Intelligence Platform using systematic investi
 
 ## Investigation Process
 
-1. Check knowledge base for similar issues:
+1. **MANDATORY** Search Graph-RAG for similar issues:
    ```bash
-   ./dev-cli ask "Issues with [component]"
-   ./dev-cli ask "[error message]"
-   ./dev-cli ask "Common problems with [feature]"
+   # Search for error patterns
+   ./dev-cli search "[error message]"
+   ./dev-cli search "[component] common issues"
+   ./dev-cli search "[component] debugging"
+   
+   # Explore related components
+   ./dev-cli explore "[component]" --depth 2
+   
+   # Ask for solutions
+   ./dev-cli ask "How to fix [error type]"
+   ./dev-cli ask "Best practices for debugging [component]"
    ```
 
 2. Review relevant logs:

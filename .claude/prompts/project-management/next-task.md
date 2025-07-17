@@ -26,9 +26,18 @@ Determine what to implement next based on current progress and priorities.
    - Dependencies between components
    - Critical path items
 
-3. Query knowledge base for prerequisites:
+3. **MANDATORY** Query Graph-RAG for prerequisites and patterns:
    ```bash
+   # Search for implementation guidance
+   ./dev-cli search "[next component] prerequisites"
+   ./dev-cli search "[next component] implementation order"
+   
+   # Explore component relationships
+   ./dev-cli explore "[next component]" --depth 2
+   
+   # Ask specific questions
    ./dev-cli ask "Prerequisites for [next component]"
+   ./dev-cli ask "NVIDIA Blueprint patterns for [next component]"
    ```
 
 4. Consider these factors:

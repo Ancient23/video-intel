@@ -24,10 +24,18 @@ Create and execute a detailed implementation plan for a component or feature fro
 
 ### Pre-Execution Phase
 
-1. Query knowledge base for patterns:
+1. **MANDATORY** Graph-RAG knowledge search:
    ```bash
+   # Search for implementation patterns
+   ./dev-cli search "[component] implementation patterns"
+   ./dev-cli search "[component] best practices"
+   
+   # Explore related technologies
+   ./dev-cli explore "[main technology]" --depth 2
+   
+   # Ask specific questions
    ./dev-cli ask "How to implement [component]"
-   ./dev-cli ask "VideoCommentator [similar feature]"
+   ./dev-cli ask "What are the NVIDIA Blueprint patterns for [component]"
    ```
 
 2. Check MongoDB schemas:
@@ -35,10 +43,11 @@ Create and execute a detailed implementation plan for a component or feature fro
    - Ensure schema alignment with PRD
    - Check for existing related models
 
-3. Review old VideoCommentator code:
-   - Check path references in CLAUDE.md
-   - Look for similar implementations
-   - Note reusable patterns
+3. Review knowledge base findings:
+   - Prioritize NVIDIA Blueprint patterns
+   - Check for cost optimization strategies
+   - Look for infrastructure best practices
+   - Note Graph-RAG relationships between components
 
 4. Present implementation plan:
    - Components to create/modify

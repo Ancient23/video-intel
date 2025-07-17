@@ -112,24 +112,69 @@ def process_video(self, video_id: str):
         raise self.retry(exc=e, countdown=60)
 ```
 
+## Graph-RAG Knowledge System
+
+### Architecture
+- **Qdrant**: Vector search for semantic similarity (224+ documents indexed)
+- **Neo4j**: Graph relationships between concepts
+- **MongoDB**: Persistent storage
+
+### MANDATORY Usage in Development
+**IMPORTANT**: You MUST use Graph-RAG before implementing ANY component:
+
+1. **Search for patterns** (ALWAYS DO THIS FIRST):
+   ```bash
+   ./dev-cli search "[component] implementation patterns"
+   ./dev-cli search "NVIDIA Blueprint [component]"
+   ./dev-cli search "[component] best practices"
+   ```
+
+2. **Explore technology relationships**:
+   ```bash
+   ./dev-cli explore "[main technology]" --depth 2
+   ./dev-cli explore "[component]" --depth 3
+   ```
+
+3. **Ask specific questions**:
+   ```bash
+   ./dev-cli ask "How should I implement [component]?"
+   ./dev-cli ask "What are the cost implications of [approach]?"
+   ```
+
+4. **Check knowledge base status**:
+   ```bash
+   ./dev-cli info  # Shows indexed documents and entities
+   ```
+
+### Query Patterns
+- **Implementation**: `search "video chunking implementation"`
+- **Debugging**: `search "[error message]"`
+- **Optimization**: `search "cost optimization [component]"`
+- **Architecture**: `search "two-phase pipeline patterns"`
+
 ## Development Workflow
 
 ### 1. Before implementing any component:
 ```bash
-# Query the knowledge base for patterns
+# MANDATORY: Query Graph-RAG for patterns
+./dev-cli search "[component] implementation patterns"
+./dev-cli search "NVIDIA Blueprint [component]"
+./dev-cli explore "[main technology]" --depth 2
+
+# Ask specific implementation questions
 ./dev-cli ask "How should I implement [component]?"
 ./dev-cli suggest "[component_name]"
 
-# Generate context for Claude CLI
+# Generate context if needed
 python tools/generate_claude_context.py "[topic]" > .claude/context.md
 ```
 
 ### 2. Follow this implementation order:
-1. Check PRD for specifications
-2. Query knowledge base for patterns
-3. Check knowledge base for implementation patterns
+1. **Query Graph-RAG first** (non-negotiable)
+2. Check PRD for specifications
+3. Apply NVIDIA Blueprint patterns found
 4. Implement with test coverage
-5. Update documentation
+5. Update documentation and knowledge base
 
 ### 3. Key directories:
 ```
@@ -174,20 +219,28 @@ services/backend/
 
 ## Common Pitfalls to Avoid
 
-1. **Memory Issues**: Set worker limits
+1. **Not Using Graph-RAG**: ALWAYS search knowledge base before implementing
+   ```bash
+   # BAD: Implementing without checking
+   # GOOD: ./dev-cli search "component patterns" first
+   ```
+
+2. **Memory Issues**: Set worker limits
    ```python
    worker_max_memory_per_child=2048000  # 2GB
    ```
 
-2. **S3 Path Validation**: Always validate S3 URIs before using cached data
+3. **S3 Path Validation**: Always validate S3 URIs before using cached data
 
-3. **Provider Costs**: Track and optimize - AWS: $0.001/frame, NVIDIA: $0.0035/frame
+4. **Provider Costs**: Track and optimize - AWS: $0.001/frame, NVIDIA: $0.0035/frame
 
-4. **Task Timeouts**: Set appropriate limits
+5. **Task Timeouts**: Set appropriate limits
    ```python
    task_time_limit=3600  # 1 hour
    task_soft_time_limit=3000  # 50 minutes
    ```
+
+6. **Ignoring NVIDIA Blueprints**: These are proven patterns - use them!
 
 ## Environment Variables
 
@@ -247,6 +300,10 @@ docker compose down
 # Start development environment
 docker compose up -d
 
+# MANDATORY before implementing anything
+./dev-cli search "[component] implementation patterns"
+./dev-cli explore "[technology]" --depth 2
+
 # Run tests in container
 docker compose exec api pytest
 
@@ -259,11 +316,19 @@ docker compose exec api bash
 # Rebuild after requirements change
 docker compose build --no-cache
 
-# Check implementation patterns
-./dev-cli ask "What's the pattern for [topic]?"
+# Check implementation patterns (use search instead of ask)
+./dev-cli search "pattern for [topic]"
+./dev-cli info  # Check knowledge base status
 ```
 
 ## Recent Updates (July 2025)
+
+### Graph-RAG Knowledge System (NEW)
+- ✅ Migrated from ChromaDB to Qdrant + Neo4j
+- ✅ 224+ documents indexed from NVIDIA Blueprints
+- ✅ Graph relationships for technology connections
+- ✅ Enhanced CLI with search and explore commands
+- ✅ All prompts updated for Graph-RAG integration
 
 ### Docker Infrastructure (COMPLETED)
 - ✅ Full Docker setup with docker-compose.yml
@@ -276,6 +341,7 @@ docker compose build --no-cache
 ### Known Issues
 - Flower monitoring UI has import errors (disabled)
 - No automated tests for Docker setup yet
+- Full knowledge base population takes ~30-60 minutes
 
 ### Next Priority Tasks
 1. Implement authentication system (CRITICAL)
@@ -286,13 +352,37 @@ docker compose build --no-cache
 
 ## When in Doubt
 
-1. Check the PRD: `docs/new/video-intelligence-prd.md`
-2. Query knowledge base: `./dev-cli ask "[question]"`
-3. Check implementation patterns in the knowledge base 
-4. Follow NVIDIA blueprints: Check PDFs in knowledge base
+1. **FIRST**: Search Graph-RAG: `./dev-cli search "[topic]"`
+2. **THEN**: Explore relationships: `./dev-cli explore "[technology]" --depth 2`
+3. Check the PRD: `docs/new/video-intelligence-prd.md`
+4. Follow NVIDIA blueprints (indexed in knowledge base)
 5. Check deployment docs: `docs/deployment/`
 
-Remember: This project demonstrates its own capabilities - we're using RAG to build a RAG system!
+Remember: This project demonstrates its own capabilities - we're using Graph-RAG to build a video intelligence system with Graph-RAG!
+
+## Graph-RAG Best Practices
+
+1. **Always search before implementing**:
+   ```bash
+   ./dev-cli search "video chunking patterns"  # Do this
+   # NOT: Just start coding based on assumptions
+   ```
+
+2. **Use entity exploration for technology decisions**:
+   ```bash
+   ./dev-cli explore "Celery" --depth 2  # See all related patterns
+   ```
+
+3. **Combine search and ask**:
+   ```bash
+   ./dev-cli search "cost optimization"  # Find relevant docs
+   ./dev-cli ask "How to reduce inference costs?"  # Get specific answer
+   ```
+
+4. **Check knowledge coverage**:
+   ```bash
+   ./dev-cli info  # See what's indexed
+   ```
 
 ## Using Prompt Templates
 

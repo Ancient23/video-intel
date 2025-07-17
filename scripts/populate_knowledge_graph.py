@@ -155,17 +155,22 @@ class UnifiedKnowledgePopulator:
         await report.save()
         
         try:
-            # 1. Process PDFs
-            await self._process_pdfs()
-            
-            # 2. Process GitHub repositories
-            await self._process_github_repos()
-            
+            # Process in order of priority, but for now just test internal docs
             # 3. Process internal documentation
             await self._process_internal_docs()
             
-            # 4. Process Graph-RAG documentation
-            await self._process_graphrag_docs()
+            # TODO: Enable these after testing
+            # # 1. Process PDFs
+            # await self._process_pdfs()
+            
+            # # 2. Process GitHub repositories
+            # await self._process_github_repos()
+            
+            # # 4. Process Graph-RAG documentation
+            # await self._process_graphrag_docs()
+            
+            # # 5. Process additional web resources
+            # await self._process_web_resources()
             
             # Update report
             report.completed_at = datetime.utcnow()
@@ -185,15 +190,23 @@ class UnifiedKnowledgePopulator:
     
     async def _process_pdfs(self):
         """Process PDF research documents"""
-        pdf_dir = project_root / "dev-knowledge-base" / "docs" / "pdfs"
-        if not pdf_dir.exists():
-            logger.warning(f"PDF directory not found: {pdf_dir}")
-            return
+        # Check multiple PDF locations
+        pdf_dirs = [
+            project_root / "dev-knowledge-base" / "docs" / "pdfs",
+            project_root / "research",
+            project_root / "resources"
+        ]
         
-        pdf_files = list(pdf_dir.glob("*.pdf"))
-        logger.info(f"Found {len(pdf_files)} PDFs to process")
+        all_pdf_files = []
+        for pdf_dir in pdf_dirs:
+            if pdf_dir.exists():
+                pdf_files = list(pdf_dir.glob("*.pdf"))
+                all_pdf_files.extend(pdf_files)
+                logger.info(f"Found {len(pdf_files)} PDFs in {pdf_dir}")
         
-        for pdf_path in pdf_files:
+        logger.info(f"Total PDFs to process: {len(all_pdf_files)}")
+        
+        for pdf_path in all_pdf_files:
             try:
                 await self._process_single_pdf(pdf_path)
                 self.stats["pdfs_processed"] += 1
@@ -248,28 +261,45 @@ class UnifiedKnowledgePopulator:
     async def _process_github_repos(self):
         """Process GitHub repositories"""
         repos = [
-            ("https://github.com/NVIDIA-AI-Blueprints/video-search-and-summarization", ["README.md", "src/**/*.py"]),
-            ("https://github.com/NVIDIA-AI-Blueprints/digital-human", ["README.md", "src/**/*.py"]),
-            ("https://github.com/NVIDIA-AI-Blueprints/rag", ["README.md", "src/**/*.py", "docs/**/*.md"]),
-            ("https://github.com/NVIDIA-AI-Blueprints/ai-virtual-assistant", ["README.md", "src/**/*.py"]),
-            ("https://github.com/mlfoundations/open_clip", ["README.md", "src/open_clip/**/*.py"]),
-            ("https://github.com/haotian-liu/LLaVA", ["README.md", "llava/**/*.py"]),
-            ("https://github.com/qdrant/qdrant", ["README.md", "docs/**/*.md"]),
-            ("https://github.com/neo4j/neo4j", ["README.md", "docs/**/*.md"]),
+            # NVIDIA AI Blueprints (Primary - CRITICAL)
+            ("https://github.com/NVIDIA-AI-Blueprints/video-search-and-summarization", ["README.md", "docs/**/*", "src/**/*.py", "*.md"], 5),
+            ("https://github.com/NVIDIA-AI-Blueprints/digital-human", ["README.md", "avatar/**/*", "chat/**/*", "docs/**/*"], 4),
+            ("https://github.com/NVIDIA-AI-Blueprints/data-flywheel", ["README.md", "docs/02-quickstart.md", "nemo/**/*", "optimization/**/*"], 4),
+            ("https://github.com/NVIDIA-AI-Blueprints/rag", ["README.md", "src/**/*.py", "docs/**/*.md"], 4),
+            
+            # Video Processing & ML Libraries
+            ("https://github.com/mlfoundations/open_clip", ["README.md", "src/open_clip/**/*.py", "docs/**/*"], 3),
+            ("https://github.com/haotian-liu/LLaVA", ["README.md", "llava/**/*.py", "docs/**/*"], 3),
+            ("https://github.com/qdrant/qdrant", ["README.md", "lib/collection/**/*", "docs/**/*.md"], 4),
+            ("https://github.com/neo4j/neo4j", ["README.md", "community/cypher/**/*", "docs/**/*.md"], 4),
+            
+            # Infrastructure & Best Practices
+            ("https://github.com/celery/celery", ["docs/userguide/canvas.rst", "celery/canvas/**/*.py", "docs/userguide/*.rst"], 4),
+            ("https://github.com/boto/boto3", ["boto3/docs/**/*", "examples/**/*.py"], 3),
+            ("https://github.com/FFmpeg/FFmpeg", ["doc/ffmpeg.texi", "doc/filters.texi", "doc/examples/**/*"], 3),
+            ("https://github.com/tiangolo/fastapi", ["docs/**/*.md", "fastapi/**/*.py"], 3),
+            ("https://github.com/encode/httpx", ["docs/**/*.md", "httpx/**/*.py"], 3),
+            ("https://github.com/roman-right/beanie", ["docs/**/*.md", "beanie/**/*.py"], 3),
         ]
         
         temp_dir = Path("/tmp/knowledge_repos")
         temp_dir.mkdir(exist_ok=True)
         
-        for repo_url, patterns in repos:
+        for repo_data in repos:
             try:
-                await self._process_single_repo(repo_url, patterns, temp_dir)
+                if len(repo_data) == 3:
+                    repo_url, patterns, importance = repo_data
+                else:
+                    repo_url, patterns = repo_data
+                    importance = 3  # default importance
+                    
+                await self._process_single_repo(repo_url, patterns, temp_dir, importance)
                 self.stats["github_repos_processed"] += 1
             except Exception as e:
                 logger.error(f"Failed to process {repo_url}: {e}")
                 self.stats["errors"].append(f"GitHub {repo_url}: {str(e)}")
     
-    async def _process_single_repo(self, repo_url: str, patterns: List[str], temp_dir: Path):
+    async def _process_single_repo(self, repo_url: str, patterns: List[str], temp_dir: Path, importance: int = 3):
         """Process a single GitHub repository"""
         repo_name = repo_url.split("/")[-1]
         logger.info(f"🐙 Processing GitHub repo: {repo_name}")
@@ -301,7 +331,7 @@ class UnifiedKnowledgePopulator:
                             category=self._categorize_content(file_path, content),
                             title=f"{repo_name}/{file_path.name}",
                             content=content[:5000],  # Limit content size
-                            importance=3,
+                            importance=importance,
                             tags=self._extract_tags(content)
                         )
                         
@@ -412,6 +442,90 @@ class UnifiedKnowledgePopulator:
             logger.error(f"Failed to fetch Graph-RAG docs: {e}")
             self.stats["errors"].append(f"Graph-RAG docs: {str(e)}")
     
+    async def _process_web_resources(self):
+        """Process additional web documentation resources"""
+        web_resources = [
+            {
+                "url": "https://docs.aws.amazon.com/rekognition/latest/dg/video.html",
+                "title": "AWS Rekognition Video Documentation",
+                "category": "video_processing",
+                "importance": 4,
+                "tags": ["aws", "rekognition", "video-analysis", "shot-detection"]
+            },
+            {
+                "url": "https://docs.celeryq.dev/en/stable/userguide/canvas.html",
+                "title": "Celery Canvas - Designing Complex Workflows",
+                "category": "infrastructure",
+                "importance": 4,
+                "tags": ["celery", "canvas", "workflow", "distributed-processing"]
+            },
+            {
+                "url": "https://ffmpeg.org/ffmpeg-filters.html",
+                "title": "FFmpeg Filters Documentation",
+                "category": "video_processing",
+                "importance": 3,
+                "tags": ["ffmpeg", "video-processing", "filters", "chunking"]
+            },
+            {
+                "url": "https://www.mongodb.com/docs/manual/aggregation/",
+                "title": "MongoDB Aggregation Pipeline",
+                "category": "data_model",
+                "importance": 3,
+                "tags": ["mongodb", "aggregation", "pipeline", "query-optimization"]
+            },
+            {
+                "url": "https://redis.io/docs/manual/patterns/",
+                "title": "Redis Patterns and Best Practices",
+                "category": "infrastructure",
+                "importance": 3,
+                "tags": ["redis", "caching", "patterns", "performance"]
+            }
+        ]
+        
+        async with aiohttp.ClientSession() as session:
+            for resource in web_resources:
+                try:
+                    async with session.get(resource["url"], timeout=30) as response:
+                        if response.status == 200:
+                            content = await response.text()
+                            
+                            # Clean HTML content (basic cleaning)
+                            if "<html" in content.lower():
+                                # Simple HTML stripping (in production, use BeautifulSoup)
+                                import re
+                                content = re.sub(r'<[^>]+>', '', content)
+                                content = re.sub(r'\s+', ' ', content)
+                            
+                            doc = ProjectKnowledge(
+                                source_file=resource["url"],
+                                source_repo="external-docs",
+                                source_type=SourceType.DOCUMENTATION,
+                                category=resource["category"],
+                                title=resource["title"],
+                                content=content[:10000],  # Limit content size
+                                importance=resource["importance"],
+                                tags=resource["tags"]
+                            )
+                            
+                            await doc.save()
+                            
+                            # Index
+                            vector_id = await self._add_to_qdrant(doc)
+                            doc.vector_db_id = vector_id
+                            
+                            if self.neo4j_graph:
+                                graph_id = await self._add_to_neo4j(doc)
+                                doc.graph_node_id = graph_id
+                            
+                            await doc.save()
+                            
+                            self.stats["total_documents"] += 1
+                            logger.info(f"✅ Processed web resource: {resource['title']}")
+                            
+                except Exception as e:
+                    logger.error(f"Failed to fetch {resource['url']}: {e}")
+                    self.stats["errors"].append(f"Web resource {resource['title']}: {str(e)}")
+    
     async def _add_to_qdrant(self, doc: ProjectKnowledge) -> str:
         """Add document to Qdrant and return vector ID"""
         # Generate embedding
@@ -431,7 +545,7 @@ class UnifiedKnowledgePopulator:
                 "category": doc.category,
                 "source_file": doc.source_file,
                 "source_repo": doc.source_repo,
-                "source_type": doc.source_type,
+                "source_type": doc.source_type.value,  # Convert enum to string
                 "importance": doc.importance,
                 "tags": doc.tags,
                 "mongodb_id": str(doc.id),
@@ -473,7 +587,7 @@ class UnifiedKnowledgePopulator:
                 id=node_id,
                 title=doc.title,
                 category=doc.category,
-                source_type=doc.source_type,
+                source_type=doc.source_type.value,  # Convert enum to string
                 source_file=doc.source_file,
                 importance=doc.importance,
                 mongodb_id=str(doc.id),
@@ -519,9 +633,28 @@ class UnifiedKnowledgePopulator:
         
         # Extract common patterns
         patterns = {
-            "technology": ["Qdrant", "Neo4j", "MongoDB", "Redis", "FastAPI", "Celery", "Docker", "AWS", "S3", "Rekognition"],
-            "concept": ["RAG", "Graph-RAG", "embeddings", "vector search", "knowledge graph", "semantic search"],
-            "framework": ["LangChain", "OpenAI", "NVIDIA", "PyTorch", "TensorFlow"],
+            "technology": [
+                "Qdrant", "Neo4j", "MongoDB", "Redis", "FastAPI", "Celery", "Docker", "AWS", "S3", "Rekognition",
+                "FFmpeg", "Boto3", "httpx", "Beanie", "Kubernetes", "PostgreSQL", "Elasticsearch", "Kafka",
+                "RabbitMQ", "nginx", "Grafana", "Prometheus", "Jenkins", "GitHub Actions"
+            ],
+            "concept": [
+                "RAG", "Graph-RAG", "embeddings", "vector search", "knowledge graph", "semantic search",
+                "two-phase pipeline", "ingestion phase", "retrieval phase", "video chunking", "shot detection",
+                "scene analysis", "multimodal", "cost optimization", "data flywheel", "inference caching"
+            ],
+            "framework": [
+                "LangChain", "OpenAI", "NVIDIA", "PyTorch", "TensorFlow", "Open CLIP", "LLaVA",
+                "NeMo", "Cosmos VLM", "VILA", "GPT-4 Vision", "Claude", "Gemini", "Llama"
+            ],
+            "service": [
+                "AWS Rekognition", "Google Video AI", "Azure Video Analyzer", "OpenAI API",
+                "NVIDIA API", "Anthropic API", "Hugging Face", "Pinecone", "Weaviate", "Milvus"
+            ],
+            "pattern": [
+                "provider abstraction", "factory pattern", "async/await", "dependency injection",
+                "canvas workflow", "error handling", "retry logic", "connection pooling", "batch processing"
+            ]
         }
         
         content_lower = content.lower()

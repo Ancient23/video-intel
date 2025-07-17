@@ -22,10 +22,18 @@ Implement a new feature for the Video Intelligence Platform following establishe
 
 ## Steps
 
-1. Knowledge base check:
+1. **MANDATORY** Graph-RAG knowledge search:
    ```bash
-   ./dev-cli ask "[feature] implementation patterns"
-   ./dev-cli ask "Similar features in VideoCommentator"
+   # Search for implementation patterns
+   ./dev-cli search "[feature] implementation patterns"
+   ./dev-cli search "NVIDIA Blueprint [feature type]"
+   
+   # Explore related technologies
+   ./dev-cli explore "[main technology]" --depth 2
+   
+   # Check for best practices
+   ./dev-cli ask "Best practices for [feature]"
+   ./dev-cli ask "Cost optimization for [feature]"
    ```
 
 2. Review PRD requirements:

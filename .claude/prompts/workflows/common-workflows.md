@@ -13,10 +13,11 @@ Beginning implementation of a new feature or component.
 # 1. Check current status
 ./dev-cli prompt status-check
 
-# 2. Query for patterns
-./dev-cli prompt knowledge-query
-# Ask: "How to implement [feature]"
-# Ask: "VideoCommentator [similar feature]"
+# 2. Query Graph-RAG for patterns (MANDATORY)
+./dev-cli search "[feature] implementation patterns"
+./dev-cli search "NVIDIA Blueprint [feature]"
+./dev-cli explore "[main technology]" --depth 2
+./dev-cli ask "Best practices for [feature]"
 
 # 3. Check technical debt
 ./dev-cli prompt debt-check
@@ -48,10 +49,10 @@ Critical bug affecting functionality.
 # 1. Investigate issue
 ./dev-cli prompt bug
 
-# 2. Query for similar issues
-./dev-cli prompt knowledge-query
-# Ask: "Issues with [component]"
-# Ask: "[Error message]"
+# 2. Query Graph-RAG for similar issues
+./dev-cli search "[error message]"
+./dev-cli search "[component] debugging"
+./dev-cli ask "How to fix [error type]"
 
 # 3. Implement fix
 # Follow bug prompt guidance
@@ -79,9 +80,9 @@ Dedicated time for debt reduction.
 # 2. Select item to fix
 # Prioritize blockers or quick wins
 
-# 3. Query for solutions
-./dev-cli prompt knowledge-query
-# Ask: "How to implement [proper solution]"
+# 3. Query Graph-RAG for solutions
+./dev-cli search "[debt item] best practices"
+./dev-cli ask "How to properly implement [solution]"
 
 # 4. Implement fix
 ./dev-cli prompt debt-resolve
@@ -100,10 +101,10 @@ Integrating new AI/ML provider.
 
 ### Steps
 ```bash
-# 1. Check provider patterns
-./dev-cli prompt knowledge-query
-# Ask: "Provider abstraction pattern"
-# Ask: "Provider factory pattern"
+# 1. Check provider patterns (MANDATORY)
+./dev-cli search "provider abstraction pattern"
+./dev-cli search "NVIDIA Blueprint provider integration"
+./dev-cli explore "ProviderFactory" --depth 2
 
 # 2. Review existing providers
 # Check services/backend/services/analysis/providers/
@@ -134,14 +135,11 @@ Addressing performance issues.
 # 1. Profile the issue
 # Use memory_monitor, logs, metrics
 
-# 2. Query optimization patterns
-./dev-cli prompt knowledge-query
-# Ask: "Optimize [operation]"
-# Ask: "Performance [component]"
-
-# 3. Check VideoCommentator solutions
-./dev-cli prompt knowledge-query
-# Ask: "VideoCommentator performance optimizations"
+# 2. Query Graph-RAG for optimization patterns
+./dev-cli search "[operation] optimization"
+./dev-cli search "performance [component]"
+./dev-cli search "cost optimization [component]"
+./dev-cli ask "NVIDIA Blueprint performance patterns"
 
 # 4. Implement optimization
 # Follow patterns found
