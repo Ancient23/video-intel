@@ -2,6 +2,15 @@
 
 A scalable video analysis platform that transforms videos into searchable, conversational knowledge bases.
 
+  • Create a scalable, plugin-based video analysis platform that pre-processes videos to build             
+  comprehensive knowledge graphs and embeddings.                                                         
+  • Store structured intelligence in MongoDB with rich metadata and relationships for persistent video     
+    timeline storage.                                                                                      
+  • Enable real-time conversational AI during video playback using pre-computed artifacts and a flexible   
+   plugin architecture.                                                                                   
+  • Optimize the platform for AWS deployment with cost-effective processing and support for any AI         
+    model/provider.   
+
 ## Architecture
 
 - **Pre-processing Phase**: Extract comprehensive knowledge from videos
