@@ -26,6 +26,7 @@ py2neo==2021.2.4
 PyPDF2==3.0.1
 GitPython==3.1.41
 aiofiles==23.2.1
+tqdm==4.66.1
 
 # NLP Requirements (optional, for enhanced entity extraction)
 # spacy==3.7.2

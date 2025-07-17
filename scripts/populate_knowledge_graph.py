@@ -36,6 +36,7 @@ import PyPDF2
 import aiohttp
 import aiofiles
 from git import Repo
+from tqdm.asyncio import tqdm
 
 # Local imports
 from models import ProjectKnowledge, ExtractionReport, SourceType
@@ -155,22 +156,28 @@ class UnifiedKnowledgePopulator:
         await report.save()
         
         try:
-            # Process in order of priority, but for now just test internal docs
+            # Process all sources in order of priority
+            logger.info("📚 Processing all knowledge sources...")
+            
+            # 1. Process PDFs
+            logger.info("📄 Starting PDF processing...")
+            await self._process_pdfs()
+            
+            # 2. Process GitHub repositories (highest priority)
+            logger.info("🐙 Starting GitHub repository processing...")
+            await self._process_github_repos()
+            
             # 3. Process internal documentation
+            logger.info("📁 Starting internal documentation processing...")
             await self._process_internal_docs()
             
-            # TODO: Enable these after testing
-            # # 1. Process PDFs
-            # await self._process_pdfs()
+            # 4. Process Graph-RAG documentation
+            logger.info("🔗 Starting Graph-RAG documentation processing...")
+            await self._process_graphrag_docs()
             
-            # # 2. Process GitHub repositories
-            # await self._process_github_repos()
-            
-            # # 4. Process Graph-RAG documentation
-            # await self._process_graphrag_docs()
-            
-            # # 5. Process additional web resources
-            # await self._process_web_resources()
+            # 5. Process additional web resources
+            logger.info("🌐 Starting web resources processing...")
+            await self._process_web_resources()
             
             # Update report
             report.completed_at = datetime.utcnow()
@@ -206,7 +213,8 @@ class UnifiedKnowledgePopulator:
         
         logger.info(f"Total PDFs to process: {len(all_pdf_files)}")
         
-        for pdf_path in all_pdf_files:
+        # Use tqdm for progress tracking
+        for pdf_path in tqdm(all_pdf_files, desc="Processing PDFs", unit="file"):
             try:
                 await self._process_single_pdf(pdf_path)
                 self.stats["pdfs_processed"] += 1
@@ -285,7 +293,8 @@ class UnifiedKnowledgePopulator:
         temp_dir = Path("/tmp/knowledge_repos")
         temp_dir.mkdir(exist_ok=True)
         
-        for repo_data in repos:
+        # Use tqdm for progress tracking
+        for repo_data in tqdm(repos, desc="Processing GitHub repos", unit="repo"):
             try:
                 if len(repo_data) == 3:
                     repo_url, patterns, importance = repo_data
@@ -483,7 +492,8 @@ class UnifiedKnowledgePopulator:
         ]
         
         async with aiohttp.ClientSession() as session:
-            for resource in web_resources:
+            # Use tqdm for progress tracking
+            for resource in tqdm(web_resources, desc="Processing web resources", unit="url"):
                 try:
                     async with session.get(resource["url"], timeout=30) as response:
                         if response.status == 200:
@@ -598,7 +608,10 @@ class UnifiedKnowledgePopulator:
             entities = self._extract_entities(doc.content)
             doc.entities = entities
             
-            for entity in entities:
+            # Get entities with types for Neo4j
+            entities_with_types = self._extract_entities_with_types(doc.content)
+            
+            for entity in entities_with_types:
                 # Create entity node
                 entity_query = """
                 MERGE (e:Entity {name: $name})
@@ -627,11 +640,57 @@ class UnifiedKnowledgePopulator:
             logger.warning(f"Neo4j operation failed: {e}")
             return None
     
-    def _extract_entities(self, content: str) -> List[Dict[str, str]]:
+    def _extract_entities(self, content: str) -> List[str]:
         """Simple entity extraction (can be enhanced with NLP)"""
         entities = []
         
         # Extract common patterns
+        patterns = {
+            "technology": [
+                "Qdrant", "Neo4j", "MongoDB", "Redis", "FastAPI", "Celery", "Docker", "AWS", "S3", "Rekognition",
+                "FFmpeg", "Boto3", "httpx", "Beanie", "Kubernetes", "PostgreSQL", "Elasticsearch", "Kafka",
+                "RabbitMQ", "nginx", "Grafana", "Prometheus", "Jenkins", "GitHub Actions"
+            ],
+            "concept": [
+                "RAG", "Graph-RAG", "embeddings", "vector search", "knowledge graph", "semantic search",
+                "two-phase pipeline", "ingestion phase", "retrieval phase", "video chunking", "shot detection",
+                "scene analysis", "multimodal", "cost optimization", "data flywheel", "inference caching"
+            ],
+            "framework": [
+                "LangChain", "OpenAI", "NVIDIA", "PyTorch", "TensorFlow", "Open CLIP", "LLaVA",
+                "NeMo", "Cosmos VLM", "VILA", "GPT-4 Vision", "Claude", "Gemini", "Llama"
+            ],
+            "service": [
+                "AWS Rekognition", "Google Video AI", "Azure Video Analyzer", "OpenAI API",
+                "NVIDIA API", "Anthropic API", "Hugging Face", "Pinecone", "Weaviate", "Milvus"
+            ],
+            "pattern": [
+                "provider abstraction", "factory pattern", "async/await", "dependency injection",
+                "canvas workflow", "error handling", "retry logic", "connection pooling", "batch processing"
+            ]
+        }
+        
+        content_lower = content.lower()
+        for entity_type, keywords in patterns.items():
+            for keyword in keywords:
+                if keyword.lower() in content_lower:
+                    entities.append(keyword)
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_entities = []
+        for entity in entities:
+            if entity not in seen:
+                seen.add(entity)
+                unique_entities.append(entity)
+        
+        return unique_entities
+    
+    def _extract_entities_with_types(self, content: str) -> List[Dict[str, str]]:
+        """Extract entities with their types for Neo4j processing"""
+        entities = []
+        
+        # Same patterns as above
         patterns = {
             "technology": [
                 "Qdrant", "Neo4j", "MongoDB", "Redis", "FastAPI", "Celery", "Docker", "AWS", "S3", "Rekognition",
