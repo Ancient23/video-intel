@@ -138,25 +138,12 @@ def suggest(ctx, component: str):
         assistant = DevelopmentAssistant(debug=debug)
         suggestions = assistant.suggest_implementation(component)
         
-        # Display as table
-        table = Table(title=f"Implementation Suggestions for {component}", show_header=True)
-        table.add_column("Aspect", style="cyan", width=30)
-        table.add_column("Details", style="green")
-        
-        for key, value in suggestions.items():
-            # Debug: check what 'list' is at this point
-            # console.print(f"[yellow]Debug: list is {list}, type is {type(list)}[/yellow]")
-            # console.print(f"[yellow]Debug: value is {value}, type is {type(value)}[/yellow]")
-            if isinstance(value, builtins.list):
-                value_str = "\n".join(f"• {item}" for item in value)
-            elif isinstance(value, builtins.dict):
-                value_str = "\n".join(f"• {k}: {v}" for k, v in value.items())
-            else:
-                value_str = str(value)
-            
-            table.add_row(key.replace("_", " ").title(), value_str)
-        
-        console.print(table)
+        # Display response in a nice panel
+        console.print(Panel(
+            Markdown(suggestions),
+            title=f"💡 Implementation Suggestions for {component}",
+            border_style="cyan"
+        ))
     except TimeoutError as e:
         console.print(f"[red]Operation timed out: {e}[/red]")
         console.print("[yellow]Tips:[/yellow]")
@@ -339,64 +326,180 @@ def list(category: Optional[str], search: Optional[str]):
 
 
 @cli.command()
-def collections():
-    """List ChromaDB collections and their stats"""
-    console.print("\n🗄️  ChromaDB Collections\n")
+def info():
+    """Display information about the knowledge base"""
+    console.print("\n🔍 Knowledge Base Information\n")
     
     try:
-        import chromadb
-        from chromadb.config import Settings
+        # Lazy import
+        global DevelopmentAssistant
+        if DevelopmentAssistant is None:
+            from rag.dev_assistant import DevelopmentAssistant
         
-        # Check environment for ChromaDB client type
-        chroma_type = os.getenv("CHROMA_CLIENT_TYPE", "persistent")
+        assistant = DevelopmentAssistant()
+        stats = assistant.get_statistics()
         
-        if chroma_type == "http":
-            # Use HTTP client to connect to Docker ChromaDB
-            client = chromadb.HttpClient(
-                host=os.getenv("CHROMA_HOST", "localhost"),
-                port=int(os.getenv("CHROMA_PORT", "8000")),
-                settings=Settings(
-                    anonymized_telemetry=False
-                )
-            )
-        else:
-            # Use persistent client for local development
-            client = chromadb.PersistentClient(
-                path=os.getenv("CHROMA_PERSIST_PATH", "./knowledge/chromadb"),
-                settings=Settings(
-                    anonymized_telemetry=False,
-                    allow_reset=True
-                )
-            )
+        # Display statistics
+        table = Table(title="Knowledge Base Statistics", show_header=True)
+        table.add_column("Metric", style="cyan")
+        table.add_column("Value", style="green")
         
-        # Get all collections
-        collections = client.list_collections()
+        table.add_row("Total Documents", str(stats.get('total_documents', 0)))
+        table.add_row("Vector Size", str(stats.get('vector_size', 1536)))
+        table.add_row("Distance Metric", stats.get('distance_metric', 'cosine'))
+        table.add_row("Status", stats.get('status', 'unknown'))
         
-        if not collections:
-            console.print("[yellow]No collections found. Run populate_knowledge_base.py first.[/yellow]")
-            return
-        
-        # Display collection info
-        table = Table(title="ChromaDB Collections", show_header=True)
-        table.add_column("Collection", style="cyan")
-        table.add_column("Documents", style="green")
-        table.add_column("Description", style="white")
-        
-        for collection in collections:
-            try:
-                count = collection.count()
-                metadata = collection.metadata or {}
-                description = metadata.get("description", "No description")
-                
-                table.add_row(collection.name, str(count), description)
-            except Exception as e:
-                table.add_row(collection.name, "Error", str(e))
+        if 'error' in stats:
+            table.add_row("Error", f"[red]{stats['error']}[/red]")
         
         console.print(table)
         
+        # Check Graph-RAG availability
+        try:
+            from rag.graph_rag_assistant import GraphRAGAssistant
+            graph_assistant = GraphRAGAssistant()
+            graph_stats = graph_assistant.get_statistics()
+            
+            console.print("\n")
+            graph_table = Table(title="Graph-RAG Statistics", show_header=True)
+            graph_table.add_column("Component", style="cyan")
+            graph_table.add_column("Status", style="green")
+            
+            # Vector DB stats
+            if "vector_db" in graph_stats:
+                vdb = graph_stats["vector_db"]
+                if "error" not in vdb:
+                    graph_table.add_row("Qdrant", f"✅ {vdb.get('total_points', 0)} points")
+                else:
+                    graph_table.add_row("Qdrant", f"❌ {vdb['error']}")
+            
+            # Graph DB stats
+            if "graph_db" in graph_stats:
+                gdb = graph_stats["graph_db"]
+                if "error" not in gdb:
+                    nodes = gdb.get('node_count', 0)
+                    entities = gdb.get('entity_count', 0)
+                    rels = gdb.get('relationship_count', 0)
+                    graph_table.add_row("Neo4j", f"✅ {nodes} nodes, {entities} entities, {rels} relationships")
+                else:
+                    graph_table.add_row("Neo4j", f"❌ {gdb.get('error', 'Not connected')}")
+            
+            console.print(graph_table)
+            
+        except Exception as e:
+            console.print("\n[yellow]Graph-RAG not available[/yellow]")
+        
     except Exception as e:
-        console.print(f"[red]Error accessing ChromaDB: {e}[/red]")
-        console.print("[yellow]Check CHROMA_CLIENT_TYPE in .env (use 'persistent' for local or 'http' for Docker)[/yellow]")
+        console.print(f"[red]Error accessing knowledge base: {e}[/red]")
+        console.print("[yellow]Make sure Qdrant is running: docker compose up -d[/yellow]")
+
+
+@cli.command()
+@click.argument('query')
+@click.option('--graph/--no-graph', default=True, help='Use Graph-RAG enhancement')
+@click.option('--limit', '-l', default=5, help='Number of results')
+@click.pass_context
+def search(ctx, query: str, graph: bool, limit: int):
+    """Advanced search with Graph-RAG capabilities"""
+    console.print(f"\n🔍 Searching with Graph-RAG: [bold cyan]{query}[/bold cyan]\n")
+    
+    debug = ctx.obj.get('debug', False)
+    
+    try:
+        # Use Graph-RAG if available and requested
+        if graph:
+            try:
+                from rag.graph_rag_assistant import GraphRAGAssistant
+                assistant = GraphRAGAssistant(debug=debug)
+                response = assistant.ask(query, context_limit=limit, use_graph=True)
+                
+                console.print(Panel(
+                    Markdown(response),
+                    title="💡 Graph-RAG Response",
+                    border_style="green"
+                ))
+                return
+            except ImportError:
+                console.print("[yellow]Graph-RAG not available, falling back to standard search[/yellow]\n")
+        
+        # Fallback to standard assistant
+        global DevelopmentAssistant
+        if DevelopmentAssistant is None:
+            from rag.dev_assistant import DevelopmentAssistant
+        
+        assistant = DevelopmentAssistant(debug=debug)
+        response = assistant.ask(query, context_limit=limit)
+        
+        console.print(Panel(
+            Markdown(response),
+            title="💡 Knowledge Base Response",
+            border_style="cyan"
+        ))
+        
+    except Exception as e:
+        console.print(f"[red]Error performing search: {e}[/red]")
+        if debug:
+            import traceback
+            traceback.print_exc()
+
+
+@cli.command()
+@click.argument('entity')
+@click.option('--depth', '-d', default=2, help='Maximum relationship depth')
+@click.pass_context
+def explore(ctx, entity: str, depth: int):
+    """Explore entity relationships in the knowledge graph"""
+    console.print(f"\n🕸️  Exploring relationships for: [bold cyan]{entity}[/bold cyan]\n")
+    
+    debug = ctx.obj.get('debug', False)
+    
+    try:
+        from rag.graph_rag_assistant import GraphRAGAssistant
+        
+        assistant = GraphRAGAssistant(debug=debug)
+        graph = assistant.explore_relationships(entity, max_depth=depth)
+        
+        if "error" in graph:
+            console.print(f"[red]Error: {graph['error']}[/red]")
+            return
+        
+        # Display graph structure
+        console.print(f"Entity: [bold]{graph['entity']}[/bold]\n")
+        
+        if not graph['connections']:
+            console.print("[yellow]No relationships found.[/yellow]")
+            return
+        
+        # Group by depth
+        by_depth = {}
+        for conn in graph['connections']:
+            d = conn['depth']
+            if d not in by_depth:
+                by_depth[d] = []
+            by_depth[d].append(conn)
+        
+        # Display by depth
+        for d in sorted(by_depth.keys()):
+            console.print(f"\n[cyan]Depth {d}:[/cyan]")
+            
+            table = Table(show_header=True)
+            table.add_column("Type", style="green")
+            table.add_column("Name", style="white")
+            table.add_column("Relationships", style="cyan")
+            
+            for conn in by_depth[d]:
+                rel_str = " → ".join(conn['relationships'])
+                table.add_row(conn['type'], conn['name'], rel_str)
+            
+            console.print(table)
+            
+    except ImportError:
+        console.print("[red]Graph-RAG is not available. Make sure Neo4j is running.[/red]")
+    except Exception as e:
+        console.print(f"[red]Error exploring relationships: {e}[/red]")
+        if debug:
+            import traceback
+            traceback.print_exc()
 
 
 

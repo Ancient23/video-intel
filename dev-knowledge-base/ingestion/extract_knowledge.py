@@ -58,7 +58,7 @@ class KnowledgeExtractor:
         """Extract key lessons and patterns"""
         collection = self.get_or_create_collection(
             "lessons_learned",
-            "Architectural decisions and lessons from VideoCommentator"
+            "Architectural decisions and implementation patterns"
         )
         
         processed_count = 0

@@ -1,7 +1,8 @@
 """
-Development Assistant with Qdrant Vector Database
+Development Assistant with Qdrant Vector Database and Graph-RAG Support
 
 This module provides RAG capabilities using Qdrant for the development CLI.
+Can be enhanced with Graph-RAG using the GraphRAGAssistant.
 """
 import os
 from typing import List, Dict, Any, Optional
@@ -297,3 +298,8 @@ Answer:"""
     def query_patterns(self, query: str, category: Optional[str] = None) -> str:
         """Query for patterns - wrapper around ask for compatibility"""
         return self.ask(query, context_limit=5)
+    
+    def suggest_implementation(self, component: str) -> str:
+        """Suggest implementation approach for a component"""
+        question = f"How should I implement {component} in the Video Intelligence Platform? Provide specific patterns and best practices."
+        return self.ask(question, context_limit=7)

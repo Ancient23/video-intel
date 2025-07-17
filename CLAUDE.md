@@ -4,7 +4,7 @@ This file provides guidance to Claude CLI when working with the Video Intelligen
 
 ## Project Overview
 
-This is a complete redesign of VideoCommentator, transforming it into a comprehensive Video Intelligence Platform with advanced knowledge memory capabilities using RAG/Graph-RAG technologies and MongoDB.
+This is a comprehensive Video Intelligence Platform with advanced knowledge memory capabilities using RAG/Graph-RAG technologies and MongoDB.
 
 **Key Architecture**: Two-phase system
 1. **Ingestion Phase**: Heavy preprocessing to extract comprehensive knowledge
@@ -38,16 +38,13 @@ This is a complete redesign of VideoCommentator, transforming it into a comprehe
 
 For detailed prompt documentation, see `.claude/README.md`
 
-## Reference Repository
+## Key Architecture Patterns
 
-**Old VideoCommentator Repository**: `/Users/filip/Documents/Source/VideoCommentator-MonoRepo` 
-
-Key patterns to reference from the old repository:
-- Provider abstraction: `services/backend/services/video_analysis/`
-- S3 utilities: `services/backend/services/s3_utils.py`
-- Redis caching: `services/backend/utils/cache_utils.py`
-- Celery configuration: `services/backend/celery_app.py`
-- Docker patterns: `docker-compose.yml`
+- Provider abstraction pattern for video analysis
+- S3 utilities for cloud storage
+- Redis caching for performance
+- Celery for distributed task processing
+- Docker-based development environment
 
 ## Primary Documentation
 
@@ -59,14 +56,14 @@ Key patterns to reference from the old repository:
 
 2. **Development Knowledge Base**: `dev-knowledge-base/`
    - Query with: `./dev-cli ask "your question"`
-   - Contains lessons learned, patterns, and decisions from VideoCommentator
+   - Contains architecture patterns, best practices, and implementation guidelines
 
 3. **NVIDIA Blueprints**: `dev-knowledge-base/docs/pdfs/`
    - Multi-modal AI pipeline architecture
    - RAG implementation patterns
    - Knowledge graph construction
 
-## Critical Patterns from VideoCommentator
+## Critical Implementation Patterns
 
 ### 1. Pydantic V2 Requirements
 ```python
@@ -130,7 +127,7 @@ python tools/generate_claude_context.py "[topic]" > .claude/context.md
 ### 2. Follow this implementation order:
 1. Check PRD for specifications
 2. Query knowledge base for patterns
-3. Reference old repository for working examples
+3. Check knowledge base for implementation patterns
 4. Implement with test coverage
 5. Update documentation
 
@@ -201,7 +198,8 @@ Required variables (see `.env.example`):
 - `S3_BUCKET`, `S3_OUTPUT_BUCKET`
 - `OPENAI_API_KEY`
 - `NVIDIA_API_KEY` (optional)
-- `VECTOR_DB_TYPE` (milvus or pinecone)
+- `VECTOR_DB_TYPE` (qdrant)
+- `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` (for Graph-RAG)
 
 ## Docker Development Environment
 
@@ -227,7 +225,7 @@ docker compose down
   - OpenAPI: http://localhost:8003/api/v1/openapi.json
 - **MongoDB**: localhost:27017
 - **Redis**: localhost:6379
-- **ChromaDB**: http://localhost:8000
+- **Qdrant**: http://localhost:6333
 - **Celery Worker**: Running with 4 threads
 - **Flower**: http://localhost:5555 (currently disabled due to import issues)
 
@@ -239,7 +237,7 @@ docker compose down
 
 ### Common Issues and Fixes
 1. **Import Errors**: Ensure all imports are absolute
-2. **Port Conflicts**: Stop old VideoCommentator containers first
+2. **Port Conflicts**: Ensure no conflicting services are running
 3. **Missing Dependencies**: Add to requirements.txt and rebuild
 4. **Class Name Mismatches**: Check actual class names in files
 
@@ -290,7 +288,7 @@ docker compose build --no-cache
 
 1. Check the PRD: `docs/new/video-intelligence-prd.md`
 2. Query knowledge base: `./dev-cli ask "[question]"`
-3. Reference old code: Look in `/Users/filip/Documents/Source/VideoCommentator-MonoRepo` 
+3. Check implementation patterns in the knowledge base 
 4. Follow NVIDIA blueprints: Check PDFs in knowledge base
 5. Check deployment docs: `docs/deployment/`
 

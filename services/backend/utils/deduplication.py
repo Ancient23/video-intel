@@ -4,7 +4,7 @@ Request deduplication utility for preventing duplicate processing.
 This module prevents multiple identical requests from triggering duplicate processing
 by using Redis to track active tasks and return existing task IDs for identical requests.
 
-Adapted from VideoCommentator for the Video Intelligence Platform.
+Implemented for the Video Intelligence Platform.
 """
 
 import redis

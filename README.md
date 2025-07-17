@@ -16,6 +16,7 @@ A scalable video analysis platform that transforms videos into searchable, conve
 - 🔧 [Scripts Documentation](./scripts/README.md) - Management script usage
 - 🧪 [Testing Guide](./docs/testing/TESTING.md) - How to run tests
 - 🧪 [Quick Test Reference](./docs/testing/QUICK_TEST_REFERENCE.md) - Quick Examples for running tests
+- 🕸️ [Graph-RAG Setup](./docs/graph-rag-setup.md) - Graph-enhanced knowledge retrieval
 
 
 ## Project Status
@@ -43,7 +44,7 @@ python scripts/init_technical_debt.py
 
 ## Development Knowledge Base
 
-This project includes a development knowledge base powered by the same RAG technology we're building.
+This project includes a development knowledge base powered by Graph-RAG technology, combining vector search (Qdrant) with graph relationships (Neo4j) for enhanced knowledge retrieval.
 
 ### Knowledge Base Commands
 

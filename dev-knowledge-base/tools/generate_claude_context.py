@@ -42,9 +42,9 @@ class ClaudeContextGenerator:
 Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ## Overview
-This context provides guidance for implementing {topic} based on patterns from the VideoCommentator project and best practices from NVIDIA blueprints.
+This context provides guidance for implementing {topic} based on best practices from NVIDIA blueprints and our knowledge base.
 
-## Relevant Patterns from VideoCommentator
+## Relevant Implementation Patterns
 {patterns}
 
 ## Architectural Decisions

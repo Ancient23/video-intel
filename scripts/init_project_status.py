@@ -54,7 +54,6 @@ async def initialize_project_status():
                 completed_tasks=[
                     "Set up project structure",
                     "Create development knowledge base",
-                    "Extract lessons from VideoCommentator",
                     "Design MongoDB schemas",
                     "Implement MongoDB models with Beanie",
                 ],

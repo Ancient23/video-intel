@@ -69,6 +69,10 @@ class KnowledgeGraphNode(Document):
     embeddings: List[float] = Field(default_factory=list)
     embedding_model: Optional[str] = None
     
+    # Graph-RAG integration
+    vector_db_id: Optional[str] = None  # Qdrant point ID
+    neo4j_node_id: Optional[str] = None  # Neo4j node ID for Graph-RAG
+    
     # Temporal information
     temporal_range: Optional[Dict[str, float]] = None
     scene_numbers: List[int] = Field(default_factory=list)
