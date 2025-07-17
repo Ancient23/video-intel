@@ -249,6 +249,8 @@ docker/volumes/
 *.db
 *.sqlite
 *.chromadb
+knowledge/chromadb/
+qdrant_storage/
 
 # PDFs (optional - uncomment if not using Git LFS)
 dev-knowledge-base/docs/pdfs/*.pdf
