@@ -46,30 +46,51 @@ The system will use:
 - Store transcripts and metadata in MongoDB video memory system
 
 #### 1.2 Multi-Modal Analysis Pipeline
+
+##### Plugin Architecture
+The analysis pipeline uses a plugin-based architecture for maximum flexibility:
+
 ```python
 # services/backend/services/analysis/
 ├── base_analyzer.py          # Abstract base class for all analyzers
-├── providers/
-│   ├── aws_rekognition.py   # AWS Rekognition integration
-│   ├── nvidia_vila.py        # NVIDIA VILA/Cosmos VLM
-│   ├── openai_vision.py     # GPT-4 Vision
-│   ├── google_video_ai.py   # Google Video Intelligence
-│   └── custom_vlm.py         # Template for custom models
-├── audio_analyzer.py         # Speech transcription & analysis
-├── transcription/
-│   ├── aws_transcribe.py    # AWS Transcribe integration
-│   └── nvidia_riva.py        # NVIDIA Riva ASR integration
+├── temporal_markers/         # Temporal marker detection plugins
+│   ├── base_temporal.py      # Abstract base for temporal markers
+│   ├── aws_rekognition.py    # AWS Rekognition (shots, objects, scenes)
+│   ├── nvidia_vila.py        # NVIDIA VILA (prompt-based detection)
+│   ├── openai_vision.py      # GPT-4 Vision temporal analysis
+│   └── registry.py           # Plugin registry and factory
+├── transcription/            # Audio transcription plugins
+│   ├── base_transcription.py # Abstract base for transcription
+│   ├── aws_transcribe.py     # AWS Transcribe integration
+│   ├── nvidia_riva.py        # NVIDIA Riva ASR integration
+│   ├── openai_whisper.py     # OpenAI Whisper (future)
+│   └── registry.py           # Plugin registry and factory
+├── visual_analysis/          # Visual content analysis
+│   ├── base_visual.py        # Abstract base for visual analysis
+│   └── providers/            # Provider implementations
 └── orchestrator.py           # Parallel execution coordinator
 ```
 
+**Plugin System Design:**
+- Each plugin type (temporal, transcription, visual) has its own base class
+- Plugins register their capabilities (supported features, constraints, costs)
+- Dynamic plugin selection based on requirements and availability
+- Fallback mechanisms for provider failures
+- Consistent interface across all providers
+
 **Key Features:**
 - Fixed-duration chunking (15-30 seconds) optimized for model constraints
-- Each chunk gets dense captions from VLMs and structured metadata from object detection
-- Object tracking across frames with persistent IDs for characters/objects
-- Full audio transcription with timestamps using AWS Transcribe or NVIDIA Riva
-- Speaker diarization for multi-speaker content
-- Temporal marker extraction for interesting timestamps (scene changes, object appearances)
+- Plugin-based temporal marker detection:
+  - AWS Rekognition: Shot boundaries, object tracking, scene changes
+  - NVIDIA VILA: Custom prompt-based event detection
+  - Extensible to any temporal analysis provider
+- Plugin-based audio transcription:
+  - AWS Transcribe: Full transcription with timestamps
+  - NVIDIA Riva: GPU-accelerated ASR with speaker diarization
+  - Provider-agnostic interface for easy extension
+- Object tracking across frames with persistent IDs
 - Parallel processing with provider-specific optimizations
+- Automatic fallback and retry mechanisms
 
 #### 1.3 Knowledge Graph Construction
 ```python
@@ -122,6 +143,7 @@ Following NVIDIA's approach:
 {
   _id: ObjectId,
   video_id: string,
+  project_id: string,  // For multi-tenancy
   node_type: "entity" | "event" | "relationship",
   label: string,
   properties: object,
@@ -138,6 +160,38 @@ Following NVIDIA's approach:
 }
 ```
 
+##### S3 Storage Architecture
+
+**Environment Variables:**
+- `S3_BUCKET`: Primary bucket for ingestion artifacts
+- `S3_OUTPUT_BUCKET`: Output bucket for processed results and retrieval
+
+**Multi-Tenant Structure:**
+```
+{S3_BUCKET}/
+├── projects/
+│   └── {project_id}/
+│       └── videos/
+│           └── {video_id}/
+│               ├── raw/               # Original video
+│               ├── chunks/            # Video chunks
+│               │   └── chunk_{index}.mp4
+│               ├── keyframes/         # Extracted keyframes
+│               │   └── frame_{timestamp}.jpg
+│               ├── transcripts/       # Audio transcripts
+│               │   ├── full.json
+│               │   └── chunks/
+│               └── metadata/          # Analysis metadata
+│                   └── analysis.json
+
+{S3_OUTPUT_BUCKET}/
+├── projects/
+│   └── {project_id}/
+│       ├── memories/                  # Video memory exports
+│       ├── compilations/              # Generated videos
+│       └── exports/                   # User exports
+```
+
 #### 1.4 Video Memory System
 The Video Memory System is the core data structure that bridges the ingestion and runtime phases:
 
@@ -147,8 +201,16 @@ The Video Memory System is the core data structure that bridges the ingestion an
 {
   _id: ObjectId,
   video_id: string,
+  project_id: string,           // Multi-tenancy support
   video_title: string,
   video_duration: float,
+  s3_paths: {
+    raw_video: string,          // s3://{S3_BUCKET}/projects/{project_id}/videos/{video_id}/raw/video.mp4
+    chunks_prefix: string,      // s3://{S3_BUCKET}/projects/{project_id}/videos/{video_id}/chunks/
+    keyframes_prefix: string,   // s3://{S3_BUCKET}/projects/{project_id}/videos/{video_id}/keyframes/
+    transcripts_prefix: string, // s3://{S3_BUCKET}/projects/{project_id}/videos/{video_id}/transcripts/
+    output_prefix: string       // s3://{S3_OUTPUT_BUCKET}/projects/{project_id}/
+  },
   
   // Chunk information
   chunks: [{
@@ -176,12 +238,31 @@ The Video Memory System is the core data structure that bridges the ingestion an
   // Temporal markers for navigation
   temporal_markers: [{
     timestamp: float,
-    type: "shot_boundary|object_appearance|scene_change|speaker_change",
+    type: "shot_boundary|object_appearance|scene_change|speaker_change|custom_event",
     description: string,
     confidence: float,
-    provider: string,
-    metadata: object
+    provider: string,        // Plugin that detected this marker
+    provider_version: string, // Plugin version for reproducibility
+    metadata: object,
+    keyframe_url: string      // Associated keyframe if available
   }],
+  
+  // Plugin tracking
+  plugins_used: {
+    temporal_markers: [{
+      plugin_name: string,
+      plugin_version: string,
+      markers_count: number,
+      processing_time: float,
+      cost: float
+    }],
+    transcription: {
+      plugin_name: string,
+      plugin_version: string,
+      processing_time: float,
+      cost: float
+    }
+  },
   
   // Full transcription
   full_transcript: string,
@@ -225,6 +306,51 @@ Upon completion of the ingestion phase, the system produces:
 5. **Full Transcription**: Time-aligned transcript with speaker diarization
 
 This pre-computed memory system enables sub-second retrieval during runtime conversations.
+
+#### 1.6 Orchestration Status Reporting
+
+**Celery Task Status Architecture:**
+```python
+# Task phases for granular progress reporting
+class IngestionPhase(Enum):
+    INITIALIZING = "initializing"
+    CHUNKING = "chunking"
+    UPLOADING_CHUNKS = "uploading_chunks"
+    ANALYZING_TEMPORAL = "analyzing_temporal"      # Temporal marker detection
+    TRANSCRIBING_AUDIO = "transcribing_audio"     # Audio transcription
+    ANALYZING_VISUAL = "analyzing_visual"         # Visual analysis
+    BUILDING_MEMORY = "building_memory"
+    CREATING_EMBEDDINGS = "creating_embeddings"
+    UPDATING_GRAPH = "updating_graph"
+    FINALIZING = "finalizing"
+
+# Progress reporting structure
+{
+    "task_id": "celery_task_id",
+    "video_id": "video_id",
+    "project_id": "project_id",
+    "current_phase": "analyzing_temporal",
+    "phase_progress": 45.5,        # Progress within current phase
+    "overall_progress": 35.0,      # Overall task progress
+    "phases_completed": [
+        {"phase": "chunking", "duration_seconds": 45, "chunks_created": 30}
+    ],
+    "current_phase_metadata": {
+        "providers_active": ["aws_rekognition", "nvidia_vila"],
+        "markers_detected": 156,
+        "estimated_remaining_seconds": 120
+    },
+    "errors": [],
+    "warnings": []
+}
+```
+
+**Status Reporting Implementation:**
+- Celery task updates state at each phase transition
+- Sub-tasks report progress to parent orchestration task
+- WebSocket endpoint for real-time progress streaming
+- Progress persistence in Redis for resilience
+- Automatic retry with progress preservation
 
 ### Phase 2: Runtime Chatbot Orchestration
 
@@ -417,13 +543,80 @@ The platform is designed to be easily deployable by anyone:
 - **Scripts**: Validation and setup automation
 - **Examples**: Sample .env configuration
 
+## Plugin Implementation Guide
+
+### Temporal Marker Plugin Interface
+```python
+from abc import ABC, abstractmethod
+from typing import List, Dict, Any, Optional
+from schemas.analysis import TemporalMarker, ChunkInfo, AnalysisConfig
+
+class BaseTemporalPlugin(ABC):
+    """Base class for temporal marker detection plugins"""
+    
+    @abstractmethod
+    def get_capabilities(self) -> Dict[str, Any]:
+        """Return plugin capabilities"""
+        return {
+            "plugin_name": "plugin_name",
+            "plugin_version": "1.0.0",
+            "supported_events": [],  # shot_boundary, object_appearance, etc.
+            "requires_gpu": False,
+            "max_chunk_duration": 30,
+            "cost_per_minute": 0.0
+        }
+    
+    @abstractmethod
+    async def detect_markers(
+        self,
+        chunk: ChunkInfo,
+        config: AnalysisConfig
+    ) -> List[TemporalMarker]:
+        """Detect temporal markers in video chunk"""
+        pass
+```
+
+### Transcription Plugin Interface
+```python
+class BaseTranscriptionPlugin(ABC):
+    """Base class for audio transcription plugins"""
+    
+    @abstractmethod
+    def get_capabilities(self) -> Dict[str, Any]:
+        """Return plugin capabilities"""
+        return {
+            "plugin_name": "plugin_name",
+            "plugin_version": "1.0.0",
+            "languages_supported": [],
+            "features": [],  # speaker_diarization, punctuation, etc.
+            "cost_per_minute": 0.0
+        }
+    
+    @abstractmethod
+    async def transcribe(
+        self,
+        audio_path: str,
+        config: TranscriptionConfig
+    ) -> TranscriptionResult:
+        """Transcribe audio file"""
+        pass
+```
+
 ## Implementation Phases
 
-### Phase 1: Foundation (Weeks 1-3)
-1. Set up MongoDB schema and connections
-2. Implement video chunking pipeline
-3. Create provider plugin architecture
-4. Basic ingestion workflow with AWS Rekognition
+### Phase 1: Foundation (Weeks 1-3) - COMPLETED
+1. ✅ Set up MongoDB schema and connections
+2. ✅ Implement video chunking pipeline
+3. ✅ Create provider plugin architecture (partial)
+4. ✅ Basic ingestion workflow structure
+
+### Phase 1.5: Plugin Architecture (Week 4) - CURRENT
+1. Create plugin base classes for temporal markers and transcription
+2. Implement plugin registries with dynamic loading
+3. Create AWS Rekognition temporal marker plugin
+4. Create AWS Transcribe audio plugin
+5. Set up S3 multi-tenant structure with env vars
+6. Add orchestration status reporting
 
 ### Phase 2: Knowledge Building (Weeks 4-6)
 1. Implement knowledge graph construction
@@ -483,6 +676,9 @@ The platform is designed to be easily deployable by anyone:
 3. **Knowledge Graph Engine** - For relationship queries
 4. **MCP Server** - For standardized tool access
 5. **WebSocket Support** - For real-time communication
+6. **Plugin System** - For temporal markers and transcription
+7. **Multi-tenant S3 Structure** - For scalable storage
+8. **Orchestration Status Reporting** - For granular progress tracking
 
 ## Cost Optimization Strategies
 
@@ -552,7 +748,7 @@ The platform provides a solid foundation for building a scalable video intellige
 
 ## Implementation Status
 
-### Phase 1: Foundation (Weeks 1-3) - IN PROGRESS
+### Phase 1: Foundation (Weeks 1-3) - COMPLETED
 
 #### ✅ Completed Components:
 1. **MongoDB Schema and Connections**
@@ -584,22 +780,50 @@ The platform provides a solid foundation for building a scalable video intellige
    - Comprehensive unit tests for all scenarios
    - Technical debt PROV-001 resolved
 
-#### ⏳ In Progress:
-- Authentication system (SEC-001)
+6. **Video Memory System** (Completed 2025-07-18)
+   - Comprehensive VideoMemory data structure
+   - Integration with orchestration service
+   - Support for temporal markers and transcripts
+   - Multi-provider tracking
+
+### Phase 1.5: Plugin Architecture (Week 4) - IN PROGRESS
+
+#### ⏳ Current Focus:
+1. **Plugin System Design** (2025-07-18)
+   - Defining base classes for temporal and transcription plugins
+   - Creating plugin registries
+   - Updating PRD with architecture
+
+#### 🎯 Next Tasks:
+1. Create temporal marker plugin base class and registry
+2. Implement AWS Rekognition temporal marker plugin
+3. Create transcription plugin base class and registry
+4. Implement AWS Transcribe plugin
+5. Set up multi-tenant S3 structure
+6. Add Celery orchestration status reporting
 
 #### ❌ Not Started:
+- NVIDIA VILA temporal marker plugin
+- NVIDIA Riva transcription plugin
 - Knowledge graph service (CORE-002)
 - Embeddings service (CORE-001)
 - Vector database integration (DB-001)
+- Authentication system (SEC-001)
 
 ### Technical Debt Summary:
-- **Total Items**: 19 (14 open, 4 resolved, 1 in progress)
+- **Total Items**: 20 (15 open, 5 resolved)
 - **Critical Issues**: 1 (Authentication placeholder)
-- **High Priority Issues**: 8
-- **Estimated Hours Remaining**: ~190 hours
+- **High Priority Issues**: 9
+- **Key Items**:
+  - ORCH-001: Missing error handling in orchestration
+  - ORCH-002: No retry logic for failed chunks
+  - ORCH-003: Hardcoded provider in temporal markers
+  - EMB-001: Missing embedding generation
+  - TEST-001: Missing integration tests
 
-### Next Priority Tasks:
-1. Implement authentication system (16 hours) - CRITICAL
-2. Start embeddings service (24 hours)
-3. Implement knowledge graph service (32 hours)
-4. Vector database integration (16 hours)
+### Current Implementation Priority:
+1. Create plugin architecture for temporal/transcription (8 hours)
+2. Implement AWS plugins (16 hours)
+3. Set up S3 multi-tenant structure (4 hours)
+4. Add orchestration status reporting (8 hours)
+5. Create integration tests (16 hours)
