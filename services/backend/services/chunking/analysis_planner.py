@@ -2,7 +2,7 @@
 Analysis Planner - Interprets user prompts and selects appropriate providers
 """
 import re
-from typing import List, Dict, Set, Tuple
+from typing import List, Dict, Set, Tuple, Optional
 from schemas.analysis import (
     AnalysisConfig, AnalysisGoal, VideoType, ProviderType,
     ProviderCapability
@@ -78,6 +78,28 @@ class AnalysisPlanner:
             cost_per_minute=0.006,
             supports_custom_prompts=False,
             max_frames_per_request=0  # Audio only
+        ),
+        ProviderType.AWS_TRANSCRIBE: ProviderCapability(
+            provider=ProviderType.AWS_TRANSCRIBE,
+            capabilities=[
+                AnalysisGoal.TRANSCRIPTION,
+                AnalysisGoal.DIALOGUE_EXTRACTION
+            ],
+            cost_per_frame=0.0,
+            cost_per_minute=0.024,  # $0.0004/second
+            supports_custom_prompts=False,
+            max_frames_per_request=0  # Audio only
+        ),
+        ProviderType.NVIDIA_RIVA: ProviderCapability(
+            provider=ProviderType.NVIDIA_RIVA,
+            capabilities=[
+                AnalysisGoal.TRANSCRIPTION,
+                AnalysisGoal.DIALOGUE_EXTRACTION
+            ],
+            cost_per_frame=0.0,
+            cost_per_minute=0.02,  # Estimated based on GPU costs
+            supports_custom_prompts=False,
+            max_frames_per_request=0  # Audio only
         )
     }
     
@@ -102,6 +124,10 @@ class AnalysisPlanner:
         AnalysisGoal.DIALOGUE_EXTRACTION: [
             "dialogue", "conversation", "speech", "talking", "words",
             "transcript", "subtitle", "what they say"
+        ],
+        AnalysisGoal.TRANSCRIPTION: [
+            "transcribe", "transcription", "audio", "speech to text",
+            "captions", "subtitles", "text", "spoken words", "narration"
         ],
         AnalysisGoal.EMOTION_ANALYSIS: [
             "emotion", "feeling", "mood", "sentiment", "expression",
@@ -153,9 +179,9 @@ class AnalysisPlanner:
         # Select providers based on goals
         provider_map = self._select_providers(goals, prompt_lower)
         
-        # Determine chunk settings based on content
+        # Determine chunk settings based on content and providers
         chunk_duration, chunk_overlap = self._determine_chunk_settings(
-            video_type, goals, video_duration_seconds
+            video_type, goals, video_duration_seconds, provider_map
         )
         
         # Create custom prompts for providers that support them
@@ -256,33 +282,63 @@ class AnalysisPlanner:
         self, 
         video_type: VideoType,
         goals: List[AnalysisGoal],
-        video_duration: float
+        video_duration: float,
+        selected_providers: Optional[Dict[str, List[ProviderType]]] = None
     ) -> Tuple[int, int]:
-        """Determine optimal chunk duration and overlap"""
-        # Base settings
-        chunk_duration = 10
+        """Determine optimal chunk duration and overlap based on models and content"""
+        # Default settings - 20 seconds with 2 second overlap
+        chunk_duration = 20
         chunk_overlap = 2
+        
+        # Model-specific optimizations
+        if selected_providers:
+            all_providers = set()
+            for providers in selected_providers.values():
+                all_providers.update(providers)
+            
+            # AWS Rekognition works well with longer chunks
+            if ProviderType.AWS_REKOGNITION in all_providers:
+                chunk_duration = 30
+            
+            # NVIDIA VILA optimal for 15-20 seconds
+            elif ProviderType.NVIDIA_VILA in all_providers:
+                chunk_duration = 20
+            
+            # OpenAI GPT-4V token efficiency at 10-15 seconds
+            elif ProviderType.OPENAI_GPT4V in all_providers:
+                chunk_duration = 15
         
         # Adjust based on video type
         if video_type == VideoType.MOVIE:
-            chunk_duration = 30  # Longer scenes
-            chunk_overlap = 5
+            chunk_duration = min(30, chunk_duration)  # Cap at 30s for movies
+            chunk_overlap = 3
         elif video_type == VideoType.SPORTS:
-            chunk_duration = 10  # Fast action
+            chunk_duration = min(15, chunk_duration)  # Shorter for fast action
             chunk_overlap = 3
         elif video_type == VideoType.SURVEILLANCE:
-            chunk_duration = 60  # Long static shots
-            chunk_overlap = 10
+            chunk_duration = 30  # Longer for static content
+            chunk_overlap = 2
+        elif video_type == VideoType.TUTORIAL:
+            chunk_duration = 25  # Medium length for instructional content
+            chunk_overlap = 2
         
         # Adjust based on goals
         if AnalysisGoal.ACTION_DETECTION in goals:
             chunk_duration = min(chunk_duration, 15)  # Shorter for action
             chunk_overlap = max(chunk_overlap, 3)
         
+        if AnalysisGoal.TRANSCRIPTION in goals:
+            # Transcription benefits from longer chunks for context
+            chunk_duration = max(chunk_duration, 20)
+        
         # Limit based on video duration
         if video_duration < 60:  # Less than 1 minute
             chunk_duration = min(chunk_duration, int(video_duration / 3))
             chunk_overlap = min(chunk_overlap, 1)
+        
+        # Ensure chunk duration is within bounds
+        chunk_duration = max(5, min(60, chunk_duration))
+        chunk_overlap = max(0, min(10, chunk_overlap))
         
         return chunk_duration, chunk_overlap
     

@@ -24,6 +24,7 @@ class AnalysisGoal(str, Enum):
     CHARACTER_TRACKING = "character_tracking"
     OBJECT_DETECTION = "object_detection"
     DIALOGUE_EXTRACTION = "dialogue_extraction"
+    TRANSCRIPTION = "transcription"
     EMOTION_ANALYSIS = "emotion_analysis"
     PLOT_SUMMARY = "plot_summary"
     TECHNICAL_ANALYSIS = "technical_analysis"
@@ -37,6 +38,8 @@ class ProviderType(str, Enum):
     NVIDIA_COSMOS = "nvidia_cosmos"
     OPENAI_GPT4V = "openai_gpt4v"
     WHISPER = "whisper"
+    AWS_TRANSCRIBE = "aws_transcribe"
+    NVIDIA_RIVA = "nvidia_riva"
     CUSTOM = "custom"
 
 
@@ -65,7 +68,7 @@ class AnalysisConfig(BaseModel):
     video_type: VideoType = VideoType.GENERAL
     analysis_goals: List[AnalysisGoal] = Field(default_factory=list)
     selected_providers: Dict[str, List[ProviderType]] = Field(default_factory=dict)
-    chunk_duration: int = Field(default=10, ge=5, le=60)
+    chunk_duration: int = Field(default=20, ge=5, le=60)  # Default 20s, model-specific in API
     chunk_overlap: int = Field(default=2, ge=0, le=10)
     cost_estimate: float = Field(default=0.0, ge=0)
     max_frames_per_chunk: int = Field(default=30)
@@ -113,12 +116,39 @@ class ObjectDetection(BaseModel):
     provider: ProviderType
 
 
+class TranscriptionSegment(BaseModel):
+    """Transcription segment with timing"""
+    start_time: float = Field(ge=0)
+    end_time: float = Field(gt=0)
+    text: str
+    speaker: Optional[str] = None
+    confidence: float = Field(ge=0, le=1, default=1.0)
+    
+    @field_validator('end_time')
+    @classmethod
+    def validate_time_range(cls, v, info):
+        if 'start_time' in info.data and v <= info.data['start_time']:
+            raise ValueError("End time must be greater than start time")
+        return v
+
+
+class TranscriptionResult(BaseModel):
+    """Complete transcription result"""
+    full_text: str
+    segments: List[TranscriptionSegment] = Field(default_factory=list)
+    provider: ProviderType
+    language: str = "en"
+    duration: float = Field(gt=0)
+    word_count: int = Field(ge=0, default=0)
+
+
 class AnalysisResult(BaseModel):
     """Combined analysis results from all providers"""
     video_id: str
     chunk_id: str
     scenes: List[SceneDetection] = Field(default_factory=list)
     objects: List[ObjectDetection] = Field(default_factory=list)
+    transcription: Optional[TranscriptionResult] = None
     captions: List[Dict[str, Any]] = Field(default_factory=list)
     custom_analysis: Dict[str, Any] = Field(default_factory=dict)
     provider_metadata: Dict[str, Any] = Field(default_factory=dict)

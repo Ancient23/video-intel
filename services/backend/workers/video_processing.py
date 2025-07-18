@@ -25,6 +25,7 @@ from models.processing_job import ProcessingJob, JobStatus
 from models.video import Video, VideoStatus
 # from models.video_analysis_job import VideoAnalysisJob, AnalysisStatus  # TODO: Uncomment when tests are updated
 from schemas.analysis import AnalysisConfig, ProviderType
+from services.chunking.orchestration_service import VideoChunkingOrchestrationService
 from beanie import PydanticObjectId
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,93 @@ def validate_analysis_config(config):
 from unittest.mock import Mock
 
 
+@celery_app.task(
+    bind=True,
+    base=VideoProcessingTask,
+    name='workers.video_processing.process_video_ingestion',
+    max_retries=3,
+    acks_late=True,
+    track_started=True,
+    task_time_limit=7200,  # 2 hours
+    task_soft_time_limit=6000  # 100 minutes
+)
+def process_video_ingestion(
+    self,
+    job_id: str,
+    video_id: str,
+    user_prompt: str
+) -> Dict[str, Any]:
+    """
+    Process video through ingestion phase using orchestration service.
+    
+    This is the main Celery task that handles video ingestion:
+    1. Fixed-duration chunking
+    2. Multi-provider analysis (visual + audio)
+    3. Memory system construction
+    
+    Args:
+        job_id: Processing job ID
+        video_id: Video ID to process
+        user_prompt: User's analysis request
+        
+    Returns:
+        Processing results with summary
+    """
+    try:
+        logger.info(f"Starting video ingestion for video {video_id}, job {job_id}")
+        
+        # Update job status
+        self.update_state(state='PROGRESS', meta={
+            'stage': 'initializing',
+            'progress': 0,
+            'job_id': job_id,
+            'video_id': video_id
+        })
+        
+        # Create orchestration service
+        orchestration_service = VideoChunkingOrchestrationService()
+        
+        # Run the ingestion pipeline asynchronously
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            result = loop.run_until_complete(
+                orchestration_service.process_video(
+                    video_id=video_id,
+                    user_prompt=user_prompt,
+                    processing_job_id=job_id
+                )
+            )
+            
+            # Update final state
+            self.update_state(state='SUCCESS', meta={
+                'stage': 'completed',
+                'progress': 100,
+                'job_id': job_id,
+                'video_id': video_id,
+                'result': result
+            })
+            
+            return result
+            
+        finally:
+            loop.close()
+            
+    except Exception as e:
+        logger.error(f"Video ingestion failed for video {video_id}: {str(e)}", exc_info=True)
+        
+        # Update job status to failed
+        asyncio.run(update_job_status(job_id, JobStatus.FAILED, str(e)))
+        
+        # Retry if within limits
+        if self.request.retries < self.max_retries:
+            raise self.retry(exc=e, countdown=60 * (self.request.retries + 1))
+        else:
+            raise
+
+
+# Keep the original task for compatibility
 @celery_app.task(
     bind=True,
     base=VideoProcessingTask,

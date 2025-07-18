@@ -16,9 +16,10 @@ import structlog
 from beanie import PydanticObjectId
 
 from models import Video, VideoStatus, Scene, ProcessingJob, JobStatus, JobType
+from models.video_memory import VideoMemory, VideoChunkMemory, TemporalMarker, TemporalMarkerType
 from schemas.analysis import (
     AnalysisConfig, ChunkInfo, AnalysisResult,
-    SceneDetection, AnalysisGoal
+    SceneDetection, AnalysisGoal, ProviderType
 )
 from .video_chunker import VideoChunker
 from .analysis_planner import AnalysisPlanner
@@ -155,7 +156,16 @@ class VideoChunkingOrchestrationService:
             
             scenes = await self._create_scenes(video, analysis_results, chunks)
             
-            # Step 5: Update video document
+            # Step 5: Build and save video memory
+            if job:
+                await job.update_progress(95, "Building video memory system")
+                await job.save()
+            
+            video_memory = await self._build_video_memory(
+                video, chunks, analysis_results, scenes, analysis_config, user_prompt
+            )
+            
+            # Step 6: Update video document
             video.status = VideoStatus.ANALYZED
             video.processing_completed_at = datetime.utcnow()
             video.total_scenes = len(scenes)
@@ -167,7 +177,8 @@ class VideoChunkingOrchestrationService:
                     for p in providers
                 )),
                 "total_cost": sum(r.total_cost for r in analysis_results),
-                "user_prompt": user_prompt
+                "user_prompt": user_prompt,
+                "video_memory_id": str(video_memory.id)
             }
             await video.save()
             
@@ -552,3 +563,158 @@ class VideoChunkingOrchestrationService:
             "error_message": video.error_message,
             "active_job_id": str(active_job.id) if active_job else None
         }
+    
+    async def _build_video_memory(
+        self,
+        video: Video,
+        chunks: List[ChunkInfo],
+        analysis_results: List[AnalysisResult],
+        scenes: List[Scene],
+        analysis_config: AnalysisConfig,
+        user_prompt: str
+    ) -> VideoMemory:
+        """Build comprehensive video memory from analysis results"""
+        
+        # Create memory chunks
+        memory_chunks = []
+        for i, (chunk, result) in enumerate(zip(chunks, analysis_results)):
+            # Extract transcript for this chunk if available
+            transcript_text = None
+            transcript_segments = []
+            if result.transcription:
+                transcript_text = result.transcription.full_text
+                transcript_segments = [
+                    {
+                        "start_time": seg.start_time,
+                        "end_time": seg.end_time,
+                        "text": seg.text,
+                        "speaker": seg.speaker,
+                        "confidence": seg.confidence
+                    }
+                    for seg in result.transcription.segments
+                ]
+            
+            # Create chunk memory
+            chunk_memory = VideoChunkMemory(
+                chunk_id=chunk.chunk_id,
+                chunk_index=chunk.chunk_index,
+                start_time=chunk.start_time,
+                end_time=chunk.end_time,
+                duration=chunk.duration,
+                s3_uri=chunk.s3_uri,
+                keyframe_url=chunk.keyframe_path,
+                transcript_text=transcript_text,
+                transcript_segments=transcript_segments,
+                visual_summary=result.captions[0] if result.captions else None,
+                detected_objects=[obj.label for obj in result.objects],
+                detected_actions=[],  # TODO: Extract from custom analysis
+                detected_scenes=[s.scene_type for s in result.scenes if s.scene_type],
+                custom_analysis=result.custom_analysis
+            )
+            memory_chunks.append(chunk_memory)
+        
+        # Extract temporal markers from all results
+        temporal_markers = []
+        
+        # Scene boundaries as markers
+        for scene in scenes:
+            marker = TemporalMarker(
+                timestamp=scene.start_time,
+                marker_type=TemporalMarkerType.SCENE_CHANGE,
+                confidence=scene.confidence_score or 1.0,
+                description=scene.description or f"Scene {scene.scene_index}",
+                provider=ProviderType.AWS_REKOGNITION,  # TODO: Get from scene data
+                scene_id=str(scene.id),
+                keyframe_url=scene.keyframe_url
+            )
+            temporal_markers.append(marker)
+        
+        # Object appearances as markers
+        for result in analysis_results:
+            chunk = next(c for c in chunks if c.chunk_id == result.chunk_id)
+            for obj in result.objects:
+                marker = TemporalMarker(
+                    timestamp=chunk.start_time + obj.frame_time,
+                    marker_type=TemporalMarkerType.OBJECT_APPEARANCE,
+                    confidence=obj.confidence,
+                    description=f"{obj.label} detected",
+                    provider=obj.provider,
+                    tracking_id=obj.tracking_id,
+                    bounding_box=obj.bounding_box
+                )
+                temporal_markers.append(marker)
+        
+        # Build full transcript if available
+        full_transcript_parts = []
+        transcript_provider = None
+        for chunk in memory_chunks:
+            if chunk.transcript_text:
+                full_transcript_parts.append(chunk.transcript_text)
+                # Get provider from first chunk with transcript
+                if not transcript_provider and len(chunk.transcript_segments) > 0:
+                    # TODO: Store provider in transcription result
+                    transcript_provider = ProviderType.AWS_TRANSCRIBE
+        
+        full_transcript = " ".join(full_transcript_parts) if full_transcript_parts else None
+        
+        # Aggregate statistics
+        all_objects = set()
+        for chunk in memory_chunks:
+            all_objects.update(chunk.detected_objects)
+        
+        # Get all providers used
+        providers_used = list(set(
+            p for providers in analysis_config.selected_providers.values() 
+            for p in providers
+        ))
+        
+        # Create video memory document
+        video_memory = VideoMemory(
+            video_id=str(video.id),
+            video_title=video.title,
+            video_duration=video.duration,
+            ingestion_completed_at=datetime.utcnow(),
+            processing_time_seconds=(
+                datetime.utcnow() - video.processing_started_at
+            ).total_seconds() if video.processing_started_at else 0,
+            total_chunks=len(chunks),
+            chunk_duration=analysis_config.chunk_duration,
+            chunk_overlap=analysis_config.chunk_overlap,
+            chunks=memory_chunks,
+            temporal_markers=temporal_markers,
+            full_transcript=full_transcript,
+            transcript_word_count=len(full_transcript.split()) if full_transcript else 0,
+            transcript_provider=transcript_provider,
+            total_objects_detected=sum(len(chunk.detected_objects) for chunk in memory_chunks),
+            unique_objects=list(all_objects),
+            total_scenes_detected=len(scenes),
+            scene_descriptions=[s.description for s in scenes if s.description],
+            providers_used=providers_used,
+            total_cost=sum(r.total_cost for r in analysis_results),
+            analysis_goals=analysis_config.analysis_goals,
+            user_prompt=user_prompt,
+            custom_prompts=analysis_config.custom_prompts,
+            text_search_enabled=bool(full_transcript),
+            visual_search_enabled=len(all_objects) > 0,
+            metadata={
+                "original_s3_uri": video.s3_uri,
+                "video_format": video.format,
+                "video_codec": video.codec,
+                "chunk_count": len(chunks),
+                "analysis_timestamp": datetime.utcnow().isoformat()
+            }
+        )
+        
+        # Save to MongoDB
+        await video_memory.save()
+        
+        logger.info(
+            "Video memory created",
+            video_id=str(video.id),
+            memory_id=str(video_memory.id),
+            chunks=len(memory_chunks),
+            markers=len(temporal_markers),
+            transcript_length=video_memory.transcript_word_count
+        )
+        
+        return video_memory

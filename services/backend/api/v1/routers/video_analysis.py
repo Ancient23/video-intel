@@ -134,7 +134,7 @@ async def start_video_analysis(
     """
     try:
         # Check if video already exists
-        existing_video = await Video.find_one({"s3_url": request.video_url})
+        existing_video = await Video.find_one({"s3_uri": request.video_url})
         
         if existing_video:
             video = existing_video
@@ -152,7 +152,7 @@ async def start_video_analysis(
             # Create new video entry
             video = Video(
                 title=request.video_url.split('/')[-1],  # Extract filename
-                s3_url=request.video_url,
+                s3_uri=request.video_url,
                 duration=0,  # Will be updated during processing
                 fps=30.0,  # Default, will be updated
                 width=1920,  # Default, will be updated
@@ -164,14 +164,24 @@ async def start_video_analysis(
         
         # Plan the analysis based on user prompt
         planner = AnalysisPlanner()
-        analysis_config = planner.plan_from_prompt(
-            user_prompt=request.user_prompt,
-            video_type=request.video_type,
-            chunk_duration=request.chunk_duration,
-            chunk_overlap=request.chunk_overlap,
-            max_frames_per_chunk=request.max_frames_per_chunk,
-            selected_providers=request.selected_providers
+        
+        # Estimate video duration if not known
+        video_duration = video.duration if video.duration > 0 else 120.0  # Default 2 minutes
+        
+        # Analyze prompt to create config
+        analysis_config = planner.analyze_prompt(
+            prompt=request.user_prompt,
+            video_duration_seconds=video_duration
         )
+        
+        # Override with any user-specified settings
+        if request.chunk_duration:
+            analysis_config.chunk_duration = request.chunk_duration
+        if request.chunk_overlap:
+            analysis_config.chunk_overlap = request.chunk_overlap
+        if request.selected_providers:
+            # TODO: Implement provider override logic
+            pass
         
         # Apply cost limit if specified
         if request.cost_limit and analysis_config.cost_estimate > request.cost_limit:
@@ -572,11 +582,14 @@ async def start_analysis_pipeline(
     
     Triggers the Celery task for video processing.
     """
-    from workers.video_processing import process_video_full_pipeline
+    from workers.video_processing import process_video_ingestion
     
-    # Trigger Celery task
-    task = process_video_full_pipeline.apply_async(
-        args=[job_id, video_id, analysis_config.model_dump()],
+    # Extract user prompt from config
+    user_prompt = analysis_config.user_prompt
+    
+    # Trigger Celery task for ingestion
+    task = process_video_ingestion.apply_async(
+        args=[job_id, video_id, user_prompt],
         queue='orchestration',
         task_id=f"{job_id}-pipeline",  # Use job_id as base for task_id for tracking
         retry=True,
