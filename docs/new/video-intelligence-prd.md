@@ -37,10 +37,13 @@ The system will use:
 ```
 
 **Implementation Details:**
-- Start with AWS Rekognition shot detection for baseline segmentation
-- Extract keyframes at shot boundaries and significant visual changes
-- Support configurable chunk sizes (5-30 seconds) based on content type
+- Use fixed-duration chunking (default 20 seconds) with configurable overlap (2 seconds)
+- Model-specific defaults: AWS Rekognition (30s), NVIDIA VILA (20s), OpenAI GPT-4V (15s)
+- AWS Rekognition used for timestamp extraction (shots, objects, scenes) not chunking
+- NVIDIA VILA for prompt-based frame analysis of interesting moments
+- Extract keyframes at chunk midpoints and significant visual changes
 - Cache raw chunks in S3 with standardized naming: `{video_id}/chunks/chunk_{index}.mp4`
+- Store transcripts and metadata in MongoDB video memory system
 
 #### 1.2 Multi-Modal Analysis Pipeline
 ```python
@@ -53,13 +56,19 @@ The system will use:
 │   ├── google_video_ai.py   # Google Video Intelligence
 │   └── custom_vlm.py         # Template for custom models
 ├── audio_analyzer.py         # Speech transcription & analysis
+├── transcription/
+│   ├── aws_transcribe.py    # AWS Transcribe integration
+│   └── nvidia_riva.py        # NVIDIA Riva ASR integration
 └── orchestrator.py           # Parallel execution coordinator
 ```
 
 **Key Features:**
+- Fixed-duration chunking (15-30 seconds) optimized for model constraints
 - Each chunk gets dense captions from VLMs and structured metadata from object detection
 - Object tracking across frames with persistent IDs for characters/objects
-- Audio transcription with speaker diarization
+- Full audio transcription with timestamps using AWS Transcribe or NVIDIA Riva
+- Speaker diarization for multi-speaker content
+- Temporal marker extraction for interesting timestamps (scene changes, object appearances)
 - Parallel processing with provider-specific optimizations
 
 #### 1.3 Knowledge Graph Construction
@@ -129,7 +138,70 @@ Following NVIDIA's approach:
 }
 ```
 
-#### 1.4 Embedding & Indexing Service
+#### 1.4 Video Memory System
+The Video Memory System is the core data structure that bridges the ingestion and runtime phases:
+
+**Memory Structure:**
+```javascript
+// Video Memory Collection
+{
+  _id: ObjectId,
+  video_id: string,
+  video_title: string,
+  video_duration: float,
+  
+  // Chunk information
+  chunks: [{
+    chunk_id: string,
+    start_time: float,
+    end_time: float,
+    s3_uri: string,
+    transcript_text: string,
+    transcript_segments: [{
+      start_time: float,
+      end_time: float,
+      text: string,
+      speaker: string,
+      confidence: float
+    }],
+    visual_summary: string,
+    detected_objects: string[],
+    embeddings: {
+      text: float[],
+      visual: float[],
+      multimodal: float[]
+    }
+  }],
+  
+  // Temporal markers for navigation
+  temporal_markers: [{
+    timestamp: float,
+    type: "shot_boundary|object_appearance|scene_change|speaker_change",
+    description: string,
+    confidence: float,
+    provider: string,
+    metadata: object
+  }],
+  
+  // Full transcription
+  full_transcript: string,
+  transcript_provider: "aws_transcribe|nvidia_riva",
+  
+  // Aggregated data
+  unique_objects: string[],
+  scene_descriptions: string[],
+  providers_used: string[],
+  total_cost: float
+}
+```
+
+**Key Benefits:**
+- Pre-computed index for instant retrieval during runtime
+- Multi-modal search capability (text + visual)
+- Time-aligned transcripts with visual events
+- Rich temporal markers for precise navigation
+
+#### 1.5 Embedding & Indexing Service
 ```python
 # services/backend/services/embeddings/
 ├── embedding_generator.py    # Multi-modal embeddings
@@ -142,6 +214,17 @@ Following NVIDIA's approach:
 ```
 
 Embeddings enable semantic search over video content, allowing queries like "What was the protagonist doing in the first scene?"
+
+### Ingestion Phase Outputs
+
+Upon completion of the ingestion phase, the system produces:
+1. **Video Memory Document**: Comprehensive index with chunks, transcripts, and temporal markers
+2. **Knowledge Graph**: Entity relationships and temporal events
+3. **Vector Embeddings**: Multi-modal embeddings for semantic search
+4. **S3 Artifacts**: Video chunks, keyframes, and metadata
+5. **Full Transcription**: Time-aligned transcript with speaker diarization
+
+This pre-computed memory system enables sub-second retrieval during runtime conversations.
 
 ### Phase 2: Runtime Chatbot Orchestration
 
@@ -408,6 +491,10 @@ Following best practices:
 2. **Caching**: Aggressive caching at every layer
 3. **Model Selection**: Use smaller models where appropriate
 4. **Storage**: Lifecycle policies for S3 artifacts
+5. **Transcription**: 
+   - AWS Transcribe: $0.024/minute (~$1.44/hour) for on-demand
+   - NVIDIA Riva: Better for high-volume (GPU-based, ~$0.02/minute)
+   - Choose based on usage patterns and volume
 
 ## Security Considerations
 
