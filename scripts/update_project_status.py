@@ -1,126 +1,188 @@
 #!/usr/bin/env python3
-"""Update project status with completed video chunking implementation"""
-
+"""
+Update MongoDB project status after completing ingestion phase work
+"""
 import asyncio
+from datetime import datetime
+from motor.motor_asyncio import AsyncIOMotorClient
+from beanie import init_beanie
+import os
+from dotenv import load_dotenv
+
+# Add project to path
 import sys
 from pathlib import Path
-from datetime import datetime, timezone
+sys.path.append(str(Path(__file__).parent.parent / "services" / "backend"))
 
-# Add backend to path
-sys.path.append(str(Path(__file__).parent.parent / "services"))
+from models import ProjectStatus, TechnicalDebt
+from models.project_status import ProjectPhase, ComponentStatus as ComponentStatusEnum
+from models.technical_debt import TechnicalDebtItem, DebtSeverity, DebtCategory, DebtStatus
 
-from backend.core.database import init_database, Database
-from backend.models import ProjectStatus, ProjectPhase, ComponentStatus
-
+load_dotenv()
 
 async def update_project_status():
-    """Update project status with video chunking completion"""
+    # Connect to MongoDB
+    mongo_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017/video-intelligence")
+    client = AsyncIOMotorClient(mongo_url)
+    db_name = mongo_url.split("/")[-1].split("?")[0]
+    db = client[db_name]
     
-    # Connect to database
-    await init_database()
+    # Initialize Beanie
+    await init_beanie(database=db, document_models=[ProjectStatus, TechnicalDebt])
     
-    try:
-        # Get existing project status
-        status = await ProjectStatus.find_one({"project_name": "video-intelligence-platform"})
-        
-        if not status:
-            print("❌ No existing project status found!")
-            return
-        
-        print("Updating project status...")
-        
-        # Update component statuses
-        status.update_component("video_chunking", ComponentStatus.COMPLETED)
-        status.update_component("provider_architecture", ComponentStatus.COMPLETED)
-        status.update_component("api_endpoints", ComponentStatus.IN_PROGRESS)
-        status.update_component("testing_suite", ComponentStatus.IN_PROGRESS)
-        
-        # Add completed tasks
-        new_completed_tasks = [
-            "Implement video chunking service with FFmpeg",
-            "Create analysis planner for user prompt interpretation",
-            "Implement NVIDIA VILA provider for VLM analysis",
-            "Implement AWS Rekognition provider for shot detection",
-            "Create provider orchestrator for multi-provider coordination",
-            "Build main orchestration service for complete workflow",
-            "Create comprehensive unit test suite",
-            "Implement FastAPI endpoints for video analysis",
-            "Add proper error handling and retry logic",
-            "Configure S3 integration for video storage"
-        ]
-        
-        for task in new_completed_tasks:
-            if task not in status.completed_tasks:
-                status.add_completed_task(task)
-        
-        # Update current tasks
-        status.current_tasks = [
-            "Complete API endpoint implementation",
-            "Set up Celery workers for distributed processing",
-            "Implement knowledge graph construction from analysis results",
-            "Create embedding service for semantic search",
-            "Build RAG system for conversational AI"
-        ]
-        
-        # Add note
-        status.add_note(
-            "Completed video chunking service with multi-provider orchestration and VLM integration",
-            "implementation"
+    # Get existing project status
+    status = await ProjectStatus.find_one({"project_name": "video-intelligence-platform"})
+    if not status:
+        print("❌ ProjectStatus not found")
+        return
+    
+    # Update component statuses
+    status.update_component("video_chunking", ComponentStatusEnum.COMPLETED)
+    status.update_component("api_endpoints", ComponentStatusEnum.IN_PROGRESS)  # Celery integration done
+    
+    # Add completed tasks
+    new_completed_tasks = [
+        "Implemented fixed-duration video chunking with model-specific defaults",
+        "Completed API-Celery integration for async video processing",
+        "Created comprehensive VideoMemory data structure for ingestion results",
+        "Updated PRD to include transcription in ingestion phase",
+        "Added support for AWS Transcribe and NVIDIA Riva in schemas",
+        "Integrated memory system building into orchestration service"
+    ]
+    
+    for task in new_completed_tasks:
+        status.add_completed_task(task)
+    
+    # Update current tasks
+    status.current_tasks = [
+        "Integrate AWS Rekognition for timestamp extraction",
+        "Implement NVIDIA VILA for prompt-based frame analysis", 
+        "Add AWS Transcribe for audio transcription",
+        "Set up S3 bucket structure for organized storage",
+        "Create comprehensive tests for ingestion pipeline"
+    ]
+    
+    # Add implementation note
+    status.add_note(
+        "Completed core ingestion infrastructure: fixed chunking, memory system, and API-Celery integration. Ready for provider implementations.",
+        "implementation"
+    )
+    
+    # Update metrics
+    status.api_endpoints_completed = 5  # Basic CRUD + analysis endpoints
+    
+    # Save updates
+    await status.save()
+    
+    print("✅ ProjectStatus updated successfully")
+    
+    # Create technical debt document if doesn't exist
+    tech_debt_doc = await TechnicalDebt.find_one()
+    if not tech_debt_doc:
+        tech_debt_doc = TechnicalDebt(items=[])
+        await tech_debt_doc.save()
+    
+    # Add new technical debt items
+    # Define new technical debt items
+    new_debt_items = [
+        TechnicalDebtItem(
+            id="ORCH-001",
+            title="Missing Error Handling in Orchestration Service",
+            description="The orchestration service needs better error handling for provider failures and partial results",
+            category=DebtCategory.ERROR_HANDLING,
+            severity=DebtSeverity.MEDIUM,
+            estimated_effort_hours=8,
+            tags=["orchestration_service", "provider_orchestrator"],
+            status=DebtStatus.OPEN
+        ),
+        TechnicalDebtItem(
+            id="ORCH-002",
+            title="No Retry Logic for Failed Chunks",
+            description="Individual chunk processing failures should be retryable without reprocessing entire video",
+            category=DebtCategory.ERROR_HANDLING,
+            severity=DebtSeverity.MEDIUM,
+            estimated_effort_hours=12,
+            tags=["video_chunker", "orchestration_service"],
+            status=DebtStatus.OPEN
+        ),
+        TechnicalDebtItem(
+            id="ORCH-003",
+            title="Hardcoded Provider in Memory Building",
+            description="TemporalMarker provider is hardcoded to AWS_REKOGNITION, should be extracted from actual results",
+            category=DebtCategory.HARDCODED,
+            severity=DebtSeverity.LOW,
+            estimated_effort_hours=2,
+            tags=["orchestration_service"],
+            status=DebtStatus.OPEN
+        ),
+        TechnicalDebtItem(
+            id="EMB-001",
+            title="Missing Embedding Generation",
+            description="VideoMemory chunks don't have embeddings generated yet - needed for semantic search",
+            category=DebtCategory.INCOMPLETE,
+            severity=DebtSeverity.HIGH,
+            estimated_effort_hours=20,
+            tags=["orchestration_service", "embeddings"],
+            status=DebtStatus.OPEN
+        ),
+        TechnicalDebtItem(
+            id="INFRA-001",
+            title="No S3 Lifecycle Policies",
+            description="Need to implement S3 lifecycle policies for automatic cleanup of old chunks",
+            category=DebtCategory.CONFIGURATION,
+            severity=DebtSeverity.LOW,
+            estimated_effort_hours=4,
+            tags=["s3_utils"],
+            status=DebtStatus.OPEN
+        ),
+        TechnicalDebtItem(
+            id="TEST-001",
+            title="Missing Integration Tests",
+            description="No integration tests for full ingestion pipeline - only unit tests exist",
+            category=DebtCategory.TESTING,
+            severity=DebtSeverity.HIGH,
+            estimated_effort_hours=28,
+            tags=["all_ingestion_components", "integration_tests"],
+            status=DebtStatus.OPEN
         )
+    ]
+    
+    # Add technical debt items if they don't exist
+    added_count = 0
+    for item in new_debt_items:
+        # Determine component based on first tag
+        component = item.tags[0] if item.tags else "general"
         
-        # Update metrics
-        status.test_coverage = 75.0  # Estimated test coverage
-        status.api_endpoints_completed = 5  # Number of API endpoints created
-        status.providers_integrated = ["NVIDIA VILA", "AWS Rekognition"]
+        # Check if already exists by ID
+        existing_ids = set()
+        if component in tech_debt_doc.debt_items:
+            existing_ids = {debt.id for debt in tech_debt_doc.debt_items[component]}
         
-        # Check if ready to move to next phase
-        foundation_components = [
-            "mongodb_setup",
-            "video_chunking",
-            "provider_architecture"
-        ]
-        
-        if all(status.components.get(c) == ComponentStatus.COMPLETED for c in foundation_components):
-            print("Foundation components complete! Ready for KNOWLEDGE_EXTRACTION phase.")
-            # Don't auto-advance phase, let user decide
-        
-        # Save updates
-        status.updated_at = datetime.now(timezone.utc)
-        await status.save()
-        
-        # Print updated status
-        print("\n=== Updated Project Status ===")
-        print(f"Project: {status.project_name}")
-        print(f"Phase: {status.current_phase}")
-        print(f"Updated: {status.updated_at}")
-        
-        print("\nComponent Status:")
-        for component, comp_status in status.components.items():
-            emoji = "✅" if comp_status == ComponentStatus.COMPLETED else "⏳" if comp_status == ComponentStatus.IN_PROGRESS else "❌"
-            print(f"  {emoji} {component}: {comp_status}")
-        
-        print(f"\nCompleted Tasks: {len(status.completed_tasks)}")
-        print(f"Current Tasks: {len(status.current_tasks)}")
-        
-        print("\nMetrics:")
-        print(f"  Test Coverage: {status.test_coverage}%")
-        print(f"  API Endpoints: {status.api_endpoints_completed}")
-        print(f"  Providers Integrated: {', '.join(status.providers_integrated)}")
-        
-        if status.notes:
-            print("\nLatest Notes:")
-            for note in status.notes[-3:]:  # Show last 3 notes
-                print(f"  [{note['category']}] {note['note']}")
-        
-        print("\n✅ Project status updated successfully!")
-        
-    except Exception as e:
-        print(f"❌ Error updating project status: {e}")
-        raise
-    finally:
-        # Disconnect from database
-        await Database.disconnect()
-
+        if item.id not in existing_ids:
+            tech_debt_doc.add_debt_item(component, item)
+            added_count += 1
+            print(f"✅ Added technical debt: {item.title}")
+        else:
+            print(f"⏭️  Technical debt already exists: {item.title}")
+    
+    # Save if we added new items
+    if added_count > 0:
+        await tech_debt_doc.save()
+    
+    # Print summary
+    print("\n📊 Updated Project Status:")
+    print(f"  - Current Phase: {status.current_phase.value}")
+    print(f"  - Video Chunking: {status.components['video_chunking'].value}")
+    print(f"  - API Endpoints: {status.components['api_endpoints'].value}")
+    print(f"  - Total Completed Tasks: {len(status.completed_tasks)}")
+    print(f"  - Current Tasks: {len(status.current_tasks)}")
+    print(f"  - New Technical Debts Added: {added_count}")
+    print(f"  - Total Technical Debts: {tech_debt_doc.total_items}")
+    
+    # Show next priorities
+    print("\n🎯 Next Priorities:")
+    for i, task in enumerate(status.current_tasks[:3], 1):
+        print(f"  {i}. {task}")
 
 if __name__ == "__main__":
     asyncio.run(update_project_status())
